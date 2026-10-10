@@ -20,6 +20,21 @@ body {
 }
 h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
 .header-ruby { font-size: 0.75rem; font-weight: normal; color: #dcb35c; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+#mode-toggle-btn {
+    background: #5c3a21;
+    color: #f3e5c8;
+    border: 1px solid #dcb35c;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: sans-serif;
+}
+#mode-toggle-btn:active { background: #3d2614; }
+
 .version-badge { font-size: 0.7rem; color: #ffadad; font-weight: bold; font-family: sans-serif; }
 
 /* プレイヤーHUD＆持ち駒トレイ */
