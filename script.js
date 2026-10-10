@@ -69,7 +69,7 @@ function closeRuleModal() {
 }
 
 function setGameMode(mode, level) {
-    playPachiSound(); // ユーザーの操作による音声初期化を確実に行う
+    playPachiSound();
 
     gameMode = mode;
     cpuLevel = level;
@@ -223,6 +223,35 @@ function getDropCoords(pieceType) {
         }
     }
     return moves;
+}
+
+// 指定したプレイヤーの王（玉）の座標を取得
+function findKingCoord(owner) {
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            let p = board[r][c];
+            if (p && p.owner === owner && p.types.some(t => t.type === 8)) {
+                return {r, c};
+            }
+        }
+    }
+    return null;
+}
+
+// 指定したマスが敵から攻撃されているか（王手されているか）判定
+function isSquareUnderAttack(targetR, targetC, attackerColor) {
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            let p = board[r][c];
+            if (p && p.owner === attackerColor) {
+                let moves = getMovableCoords(r, c, p);
+                if (moves.some(m => m.r === targetR && m.c === targetC)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 function render() {
@@ -471,39 +500,89 @@ function runCpuTurn() {
     if (cpuLevel === 1) {
         bestMove = allMoves[Math.floor(Math.random() * allMoves.length)];
     } else {
+        // 現在後手の王が王手されているかチェック
+        let goteKing = findKingCoord('gote');
+        let isKingInCheck = goteKing ? isSquareUnderAttack(goteKing.r, goteKing.c, 'sente') : false;
+
         let scoredMoves = allMoves.map(move => {
-            let score = Math.random() * (cpuLevel === 3 ? 1 : 4);
+            let score = Math.random() * (cpuLevel === 3 ? 1 : 3);
+
+            // 仮想的に手を動かしてみて、王手状態がどうなるか評価
+            let movingPiece = null;
+            let targetPiece = null;
+            let capturedPiece = null;
 
             if (move.type === 'board') {
-                let movingPiece = board[move.fromR][move.fromC];
-                let target = board[move.toR][move.toC];
+                movingPiece = board[move.fromR][move.fromC];
+                targetPiece = board[move.toR][move.toC];
+                board[move.fromR][move.fromC] = null;
+                capturedPiece = board[move.toR][move.toC];
+                board[move.toR][move.toC] = movingPiece;
+            } else if (move.type === 'drop') {
+                capturedPiece = board[move.toR][move.toC];
+                board[move.toR][move.toC] = createPieceObj([move.pieceType], 'gote');
+            }
 
-                if (target) {
-                    if (target.owner === 'sente') {
-                        if (target.types.some(t => t.type === 8)) {
-                            score += 50000;
-                        } else {
-                            let targetVal = target.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0);
-                            let movingVal = movingPiece.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0);
-                            score += targetVal * 25;
-                            if (targetVal > movingVal) score += 50;
-                        }
-                    } else if (target.owner === 'gote') {
-                        let stackCountAfter = target.types.length + movingPiece.types.length;
-                        score += stackCountAfter * 20;
-                        score += 15;
+            // 移動後の後手王の位置確認
+            let newGoteKing = findKingCoord('gote');
+            let willBeInCheck = newGoteKing ? isSquareUnderAttack(newGoteKing.r, newGoteKing.c, 'sente') : false;
+
+            // 1. 王手されているのに、さらに王手がかかる最悪な手は極端に減点
+            if (willBeInCheck) {
+                score -= 10000;
+            } else if (isKingInCheck) {
+                // 王手状態から脱出できた手には巨大なボーナス
+                score += 5000;
+            }
+
+            // 相手の王（先手王）の位置を確認して、王手（攻撃）できるかを評価
+            let senteKing = findKingCoord('sente');
+            if (senteKing) {
+                // 相手の王を取れるなら最強最優先
+                if (targetPiece && targetPiece.owner === 'sente' && targetPiece.types.some(t => t.type === 8)) {
+                    score += 100000;
+                } else if (isSquareUnderAttack(senteKing.r, senteKing.c, 'gote')) {
+                    // 王手（チェック）をかける手には高得点
+                    score += 2500;
+                }
+            }
+
+            // 通常の評価（駒の獲得、スタッキング、前進など）
+            if (move.type === 'board') {
+                if (targetPiece) {
+                    if (targetPiece.owner === 'sente') {
+                        let targetVal = targetPiece.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0);
+                        let movingVal = movingPiece.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0);
+                        score += targetVal * 30;
+                        if (targetVal > movingVal) score += 60;
+                    } else if (targetPiece.owner === 'gote') {
+                        let stackCountAfter = targetPiece.types.length + movingPiece.types.length;
+                        score += stackCountAfter * 25;
+                        score += 20;
                     }
                 }
 
                 if (cpuLevel === 3) {
-                    score += move.toR * 5;
+                    score += move.toR * 8; // 敵陣（上方向）へ進むほど高得点
+                    if (senteKing) {
+                        let dist = Math.abs(move.toR - senteKing.r) + Math.abs(move.toC - senteKing.c);
+                        if (dist <= 2) score += (3 - dist) * 50; // 相手の王に近づく手
+                    }
                 } else {
                     score += move.toR;
                 }
 
             } else if (move.type === 'drop') {
-                score += PIECE_VALUES[move.pieceType] * 8;
-                if (move.toR >= 5) score += 15;
+                score += PIECE_VALUES[move.pieceType] * 12;
+                if (move.toR >= 5) score += 30;
+            }
+
+            // 盤面を元に戻す
+            if (move.type === 'board') {
+                board[move.fromR][move.fromC] = movingPiece;
+                board[move.toR][move.toC] = capturedPiece;
+            } else if (move.type === 'drop') {
+                board[move.toR][move.toC] = capturedPiece;
             }
 
             return { move, score };
