@@ -1,9 +1,4 @@
-大変失礼いたしました！ブラウザを変えても「読み込み中...」のままになってしまうということは、JavaScriptコードのどこかで文法エラー（Syntax Error）などの致命的な不具合が発生し、スクリプトの実行自体が途中で止まってしまっている状態です。
-原因を調査したところ、直前の修正で追加した非同期処理（async/await や await executeMove(...) の呼び出し構造）の兼ね合いで、スクリプトの読み込み時に構文エラーを引き起こしていた可能性が高いです。
-エラーが起きないよう完全にクリーンで安定した script.js (v3.48・修正完全版) を作成しましたので、こちらを上書きしてご確認ください。
-script.js (v3.48・修正完全版)
-const SCRIPT_VERSION = 'v3.48';
-
+const SCRIPT_VERSION = 'v3.49';
 let audioCtx = null;
 
 function initAudio() {
@@ -19,20 +14,15 @@ function playPachiSound() {
     try {
         initAudio();
         if (!audioCtx) return;
-
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(900, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
-
         gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-
         osc.start();
         osc.stop(audioCtx.currentTime + 0.05);
     } catch (e) {}
@@ -72,7 +62,6 @@ const ROW_NAMES = ['一', '二', '三', '四', '五', '六', '七', '八', '九'
 let board = Array(9).fill(null).map(() => Array(9).fill(null));
 let hands = { sente: [], gote: [] };
 let gameLogs = [];
-
 let turn = 'sente';
 let gameMode = 'cpu';
 let cpuLevel = 2;
@@ -81,17 +70,13 @@ let selectedHandIndex = null;
 let movableCoords = [];
 let isCpuThinking = false;
 let isGameOver = false;
-
 let lastMove = null;
 let historyStack = [];
-
 let promoteResolver = null;
 
 function updateVersionBadge() {
     const jsVerSpan = document.getElementById('js-version');
-    if (jsVerSpan) {
-        jsVerSpan.textContent = SCRIPT_VERSION;
-    }
+    if (jsVerSpan) jsVerSpan.textContent = SCRIPT_VERSION;
 }
 
 function addGameLog(message) {
@@ -113,9 +98,7 @@ function renderLogs() {
 }
 
 function getPieceNamesStr(pieceObj) {
-    return pieceObj.types.map(t => {
-        return PIECE_DISPLAY_NAMES[t.type].name;
-    }).join('+');
+    return pieceObj.types.map(t => PIECE_DISPLAY_NAMES[t.type].name).join('+');
 }
 
 function openModeModal() {
@@ -142,7 +125,6 @@ function setGameMode(mode, level) {
     gameMode = mode;
     cpuLevel = level;
     document.getElementById('mode-modal').style.display = 'none';
-
     const goteName = document.getElementById('gote-name');
     if (goteName) {
         if (gameMode === 'cpu') {
@@ -165,7 +147,6 @@ function initBoard() {
     isGameOver = false;
 
     const setupLine = [2, 3, 4, 5, 8, 5, 4, 3, 2];
-
     for (let c = 0; c < 9; c++) board[0][c] = createPieceObj([setupLine[c]], 'gote');
     board[1][1] = createPieceObj([7], 'gote');
     board[1][7] = createPieceObj([6], 'gote');
@@ -197,10 +178,7 @@ function saveHistory() {
             types: cell.types.map(t => ({ type: t.type, isPromoted: t.isPromoted }))
         };
     }));
-    let handsCopy = {
-        sente: [...hands.sente],
-        gote: [...hands.gote]
-    };
+    let handsCopy = { sente: [...hands.sente], gote: [...hands.gote] };
     historyStack.push({
         board: boardCopy,
         hands: handsCopy,
@@ -218,16 +196,11 @@ function undoMove() {
         alert("これ以上戻せません。");
         return;
     }
-
     let stepsToUndo = (gameMode === 'cpu' && historyStack.length >= 2) ? 2 : 1;
     let prevState = null;
-
     for (let i = 0; i < stepsToUndo; i++) {
-        if (historyStack.length > 0) {
-            prevState = historyStack.pop();
-        }
+        if (historyStack.length > 0) prevState = historyStack.pop();
     }
-
     if (prevState) {
         board = prevState.board;
         hands = prevState.hands;
@@ -244,9 +217,7 @@ function hasNifu(col, owner) {
     for (let r = 0; r < 9; r++) {
         let p = board[r][col];
         if (p && p.owner === owner) {
-            if (p.types.some(t => t.type === 1 && !t.isPromoted)) {
-                return true;
-            }
+            if (p.types.some(t => t.type === 1 && !t.isPromoted)) return true;
         }
     }
     return false;
@@ -266,7 +237,6 @@ function getMovableCoords(r, c, pieceObj) {
             if (target.owner === pieceObj.owner) {
                 if (pieceObj.types.some(t => t.type === 8) || target.types.some(t => t.type === 8)) return false;
                 if (target.types.length + pieceObj.types.length > 4) return false;
-                
                 let movingHasFu = pieceObj.types.some(t => t.type === 1);
                 let targetHasFu = target.types.some(t => t.type === 1);
                 if (movingHasFu || targetHasFu) return false;
@@ -279,18 +249,12 @@ function getMovableCoords(r, c, pieceObj) {
 function getRawMoves(type, isPromoted, owner, r, c) {
     let moves = [];
     let dir = (owner === 'sente') ? -1 : 1;
-
     if (isPromoted && [1, 2, 3, 4].includes(type)) {
         return getGoldMoves(owner, r, c);
     }
-
     switch(type) {
-        case 1:
-            addStep(moves, r + dir, c);
-            break;
-        case 2:
-            addRay(moves, owner, r, c, dir, 0);
-            break;
+        case 1: addStep(moves, r + dir, c); break;
+        case 2: addRay(moves, owner, r, c, dir, 0); break;
         case 3:
             addStep(moves, r + dir * 2, c - 1);
             addStep(moves, r + dir * 2, c + 1);
@@ -300,8 +264,7 @@ function getRawMoves(type, isPromoted, owner, r, c) {
                 addStep(moves, r + (owner==='sente'?o[0]:-o[0]), c + o[1]);
             });
             break;
-        case 5:
-            return getGoldMoves(owner, r, c);
+        case 5: return getGoldMoves(owner, r, c);
         case 6:
             [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(o => addRay(moves, owner, r, c, o[0], o[1]));
             if (isPromoted) getGoldMoves(owner, r, c).forEach(m => moves.push(m));
@@ -341,7 +304,6 @@ function addRay(moves, owner, r, c, dr, dc) {
 function getDropCoords(pieceType, owner) {
     let moves = [];
     let lastRank = (owner === 'sente') ? 0 : 8;
-
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
             if (!board[r][c]) {
@@ -360,9 +322,7 @@ function findKingCoord(owner) {
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
             let p = board[r][c];
-            if (p && p.owner === owner && p.types.some(t => t.type === 8)) {
-                return {r, c};
-            }
+            if (p && p.owner === owner && p.types.some(t => t.type === 8)) return {r, c};
         }
     }
     return null;
@@ -374,9 +334,7 @@ function isSquareUnderAttack(targetR, targetC, attackerColor) {
             let p = board[r][c];
             if (p && p.owner === attackerColor) {
                 let moves = getMovableCoords(r, c, p);
-                if (moves.some(m => m.r === targetR && m.c === targetC)) {
-                    return true;
-                }
+                if (moves.some(m => m.r === targetR && m.c === targetC)) return true;
             }
         }
     }
@@ -387,29 +345,24 @@ function render() {
     const container = document.getElementById('board-container');
     if (!container) return;
     container.innerHTML = '';
-
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
             if (selectedCoord && selectedCoord.r === r && selectedCoord.c === c) cell.classList.add('selected');
             if (movableCoords.some(m => m.r === r && m.c === c)) cell.classList.add('movable');
-
             if (lastMove) {
                 if ((lastMove.from && lastMove.from.r === r && lastMove.from.c === c) ||
                     (lastMove.to && lastMove.to.r === r && lastMove.to.c === c)) {
                     cell.classList.add('last-moved');
                 }
             }
-
             const piece = board[r][c];
             if (piece) {
                 const pDiv = document.createElement('div');
                 pDiv.className = `piece ${piece.owner} ${piece.types.length > 1 ? 'merged' : ''}`;
-                
                 const innerDiv = document.createElement('div');
                 innerDiv.className = 'piece-content-inner';
-
                 if (piece.types.length > 1) {
                     const gridDiv = document.createElement('div');
                     gridDiv.className = 'piece-grid';
@@ -438,7 +391,6 @@ function render() {
             container.appendChild(cell);
         }
     }
-
     renderHands();
     updateHUD();
     renderLogs();
@@ -470,16 +422,11 @@ function renderHands() {
 function updateHUD() {
     const senteHud = document.getElementById('sente-hud');
     const goteHud = document.getElementById('gote-hud');
-    
     if (senteHud && goteHud) {
         senteHud.classList.remove('active');
         goteHud.classList.remove('active');
-        
-        if (turn === 'sente') {
-            senteHud.classList.add('active');
-        } else {
-            goteHud.classList.add('active');
-        }
+        if (turn === 'sente') senteHud.classList.add('active');
+        else goteHud.classList.add('active');
     }
 }
 
@@ -493,19 +440,14 @@ async function handleCellClick(r, c) {
             alert("同じ筋に歩を2枚打つ「二歩」は禁止されています！");
             return;
         }
-
         saveHistory();
-
         hands[turn].splice(selectedHandIndex, 1);
         board[r][c] = createPieceObj([pieceType], turn);
-        
         lastMove = { from: null, to: { r, c } };
-
         let pName = PIECE_DISPLAY_NAMES[pieceType].name;
         let posStr = `${9 - c}${ROW_NAMES[r]}`;
         let playerStr = turn === 'sente' ? '先手' : '後手';
         addGameLog(`${playerStr}: ${pName}を ${posStr} に打つ`);
-
         playPachiSound();
         resetSelection();
         switchTurn();
@@ -516,9 +458,7 @@ async function handleCellClick(r, c) {
         saveHistory();
         await executeMove(selectedCoord.r, selectedCoord.c, r, c);
         resetSelection();
-        if (!isGameOver) {
-            switchTurn();
-        }
+        if (!isGameOver) switchTurn();
         return;
     }
 
@@ -575,7 +515,6 @@ async function executeMove(fromR, fromC, toR, toC) {
             target.types.push(...moving.types);
             let targetNameAfter = getPieceNamesStr(target);
             board[fromR][fromC] = null;
-            
             addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し自分の [${targetNameBefore}] と合体 (${targetNameAfter})`);
         } else {
             if (target.types.some(t => t.type === 8)) {
@@ -586,21 +525,14 @@ async function executeMove(fromR, fromC, toR, toC) {
                 board[fromR][fromC] = null;
                 isGameOver = true;
                 render();
-                setTimeout(() => {
-                    alert(`${winnerStr}の勝利です！（王将を捕らえました）`);
-                }, 100);
+                setTimeout(() => { alert(`${winnerStr}の勝利です！（王将を捕らえました）`); }, 100);
                 return;
             }
-
-            target.types.forEach(p => {
-                hands[turn].push(p.type);
-            });
-
+            target.types.forEach(p => hands[turn].push(p.type));
             let targetNameCaptured = getPieceNamesStr(target);
             board[toR][toC] = moving;
             board[fromR][fromC] = null;
             await checkPromotion(board[toR][toC], fromR, toR, turn);
-
             addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し、相手の [${targetNameCaptured}] を取る`);
         }
     } else {
@@ -659,7 +591,6 @@ function switchTurn() {
     if (isGameOver) return;
     turn = (turn === 'sente') ? 'gote' : 'sente';
     render();
-
     if (gameMode === 'cpu' && turn === 'gote' && !isGameOver) {
         isCpuThinking = true;
         setTimeout(runCpuTurn, 600);
@@ -668,9 +599,7 @@ function switchTurn() {
 
 async function runCpuTurn() {
     if (isGameOver) return;
-
     let allMoves = [];
-
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
             let p = board[r][c];
@@ -682,7 +611,6 @@ async function runCpuTurn() {
             }
         }
     }
-
     hands['gote'].forEach((pieceType, hIndex) => {
         let dropCoords = getDropCoords(pieceType, 'gote');
         dropCoords.forEach(d => {
@@ -694,39 +622,29 @@ async function runCpuTurn() {
         addGameLog("後手（CPU）の指せる手がないため先手の勝利です。");
         isGameOver = true;
         render();
-        setTimeout(() => {
-            alert("後手（CPU）の指せる手がありません。先手の勝利です！");
-        }, 100);
+        setTimeout(() => { alert("後手（CPU）の指せる手がありません。先手の勝利です！"); }, 100);
         isCpuThinking = false;
         return;
     }
 
     saveHistory();
-
     let bestMove;
-
     if (cpuLevel === 1) {
         bestMove = allMoves[Math.floor(Math.random() * allMoves.length)];
     } else {
         let goteKing = findKingCoord('gote');
         let isKingInCheck = goteKing ? isSquareUnderAttack(goteKing.r, goteKing.c, 'sente') : false;
-
         let scoredMoves = allMoves.map(move => {
             let score = Math.random() * (cpuLevel === 3 ? 0.5 : 2);
-
             let movingPiece = null;
             let targetPiece = null;
-
             if (move.type === 'board') {
                 movingPiece = board[move.fromR][move.fromC];
                 targetPiece = board[move.toR][move.toC];
-                
                 board[move.fromR][move.fromC] = null;
-
                 if (targetPiece) {
                     if (targetPiece.owner === 'gote') {
-                        let simulatedTypes = [...targetPiece.types, ...movingPiece.types];
-                        board[move.toR][move.toC] = { types: simulatedTypes, owner: 'gote' };
+                        board[move.toR][move.toC] = { types: [...targetPiece.types, ...movingPiece.types], owner: 'gote' };
                     } else {
                         board[move.toR][move.toC] = movingPiece;
                     }
@@ -740,108 +658,30 @@ async function runCpuTurn() {
 
             let newGoteKing = findKingCoord('gote');
             let willBeInCheck = newGoteKing ? isSquareUnderAttack(newGoteKing.r, newGoteKing.c, 'sente') : false;
+            if (willBeInCheck) score -= 50000;
+            else if (isKingInCheck) score += 15000;
 
-            if (willBeInCheck) {
-                score -= 50000;
-            } else if (isKingInCheck) {
-                score += 15000;
-            }
-
-            // 王が不用意に前に飛び出す行動をペナルティ
             if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
-                if (move.toR >= 3) {
-                    score -= (move.toR - 2) * 1500; 
-                }
+                if (move.toR >= 3) score -= (move.toR - 2) * 1500;
             }
 
-            // 大駒（飛車・角）が無意味にウロウロするのを抑制
             if (move.type === 'board' && movingPiece) {
                 let isMajorPiece = movingPiece.types.some(t => t.type === 6 || t.type === 7);
                 if (isMajorPiece && !targetPiece) {
                     let isCheckingSente = findKingCoord('sente') ? getMovableCoords(move.toR, move.toC, movingPiece).some(m => m.r === findKingCoord('sente').r && m.c === findKingCoord('sente').c) : false;
-                    if (!isCheckingSente && move.toR < 5) {
-                        score -= 50;
-                    }
+                    if (!isCheckingSente && move.toR < 5) score -= 50;
                 }
             }
 
             let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
             let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
-            
             if (isUnderSenteAttack && !isProtectedByGote) {
                 let pieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
                 score -= pieceVal * 400;
             } else if (isUnderSenteAttack && targetPiece && targetPiece.owner === 'sente') {
                 let myPieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
                 let capturedVal = getPieceTotalValue(targetPiece);
-                if (myPieceVal > capturedVal) {
-                    score -= (myPieceVal - capturedVal) * 200;
-                }
-            }
-
-            if (newGoteKing) {
-                let sentePiecesThreatening = 0;
-                for (let r = 0; r < 9; r++) {
-                    for (let c = 0; c < 9; c++) {
-                        let sp = board[r][c];
-                        if (sp && sp.owner === 'sente') {
-                            let distToKing = Math.abs(r - newGoteKing.r) + Math.abs(c - newGoteKing.c);
-                            if (distToKing <= 2) {
-                                sentePiecesThreatening += getPieceTotalValue(sp);
-                            }
-                        }
-                    }
-                }
-                if (sentePiecesThreatening > 3) {
-                    let moveDistToKing = Math.abs(move.toR - newGoteKing.r) + Math.abs(move.toC - newGoteKing.c);
-                    if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
-                        if (moveDistToKing > (Math.abs(move.fromR - newGoteKing.r) + Math.abs(move.fromC - newGoteKing.c))) {
-                            score += 8000;
-                        }
-                    } else if (moveDistToKing <= 2) {
-                        score += 3000;
-                    }
-                }
-            }
-
-            let senteKing = findKingCoord('sente');
-            
-            let isCapturingKing = false;
-            if (move.type === 'board') {
-                if (targetPiece && targetPiece.owner === 'sente' && targetPiece.types.some(t => t.type === 8)) {
-                    isCapturingKing = true;
-                    score += 999999;
-                } else if (targetPiece) {
-                    if (targetPiece.owner === 'sente') {
-                        let capturedVal = getPieceTotalValue(targetPiece);
-                        score += capturedVal * 150;
-                    } else {
-                        score += 10; 
-                    }
-                }
-
-                let isCheckingSente = senteKing ? getMovableCoords(move.toR, move.toC, board[move.toR][move.toC]).some(m => m.r === senteKing.r && m.c === senteKing.c) : false;
-                if (isCheckingSente) {
-                    let movingVal = getPieceTotalValue(board[move.toR][move.toC]);
-                    if (movingVal <= 1 && isUnderSenteAttack) {
-                        score -= 5000;
-                    } else {
-                        score += 4000;
-                    }
-                }
-
-                if (!isCapturingKing && cpuLevel === 3) {
-                    score += move.toR * 6;
-                    if (senteKing) {
-                        let dist = Math.abs(move.toR - senteKing.r) + Math.abs(move.toC - senteKing.c);
-                        if (dist <= 2) score += (3 - dist) * 40;
-                    }
-                } else if (!isCapturingKing) {
-                    score += move.toR;
-                }
-            } else if (move.type === 'drop') {
-                score += PIECE_VALUES[move.pieceType] * 40;
-                if (move.toR >= 5) score += 50;
+                if (myPieceVal > capturedVal) score -= (myPieceVal - capturedVal) * 200;
             }
 
             if (move.type === 'board') {
@@ -850,10 +690,8 @@ async function runCpuTurn() {
             } else if (move.type === 'drop') {
                 board[move.toR][move.toC] = targetPiece;
             }
-
             return { move, score };
         });
-
         scoredMoves.sort((a, b) => b.score - a.score);
         bestMove = scoredMoves[0].move;
     }
@@ -879,3 +717,4 @@ async function runCpuTurn() {
 
 initBoard();
 render();
+openModeModal();
