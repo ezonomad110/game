@@ -52,11 +52,13 @@ let movableCoords = [];
 let isCpuThinking = false;
 
 function openModeModal() {
-    document.getElementById('mode-modal').style.display = 'flex';
+    const modal = document.getElementById('mode-modal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function openRuleModal() {
-    document.getElementById('rule-modal').style.display = 'flex';
+    const modal = document.getElementById('rule-modal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function setGameMode(mode, level) {
@@ -68,14 +70,18 @@ function setGameMode(mode, level) {
 
     gameMode = mode;
     cpuLevel = level;
-    document.getElementById('mode-modal').style.display = 'none';
+    
+    const modeModal = document.getElementById('mode-modal');
+    if (modeModal) modeModal.style.display = 'none';
 
     const goteName = document.getElementById('gote-name');
-    if (gameMode === 'cpu') {
-        let lvlName = level === 1 ? '初級' : (level === 2 ? '中級' : '上級・強');
-        goteName.textContent = `後手 (CPU:${lvlName})`;
-    } else {
-        goteName.textContent = '後手 (プレイヤー)';
+    if (goteName) {
+        if (gameMode === 'cpu') {
+            let lvlName = level === 1 ? '初級' : (level === 2 ? '中級' : '上級・強');
+            goteName.textContent = `後手 (CPU:${lvlName})`;
+        } else {
+            goteName.textContent = '後手 (プレイヤー)';
+        }
     }
     initBoard();
     render();
@@ -219,6 +225,7 @@ function getDropCoords(pieceType) {
 
 function render() {
     const container = document.getElementById('board-container');
+    if (!container) return;
     container.innerHTML = '';
 
     for (let r = 0; r < 9; r++) {
@@ -264,6 +271,7 @@ function render() {
 function renderHands() {
     ['sente', 'gote'].forEach(player => {
         const handDiv = document.getElementById(`${player}-hand-pieces`);
+        if (!handDiv) return;
         handDiv.innerHTML = '';
         hands[player].forEach((typeId, index) => {
             const hp = document.createElement('div');
@@ -517,24 +525,41 @@ function runCpuTurn() {
     render();
 }
 
-// イベントリスナーを確実にバインドして、ボタンが動かない問題を完全に解消
+// 確実にボタンクリック・タッチイベントをバインド
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById('btn-mode').addEventListener('click', openModeModal);
-    document.getElementById('btn-rule').addEventListener('click', openRuleModal);
-    document.getElementById('mode-pvp').addEventListener('click', () => setGameMode('pvp', 0));
-    document.getElementById('mode-cpu-1').addEventListener('click', () => setGameMode('cpu', 1));
-    document.getElementById('mode-cpu-2').addEventListener('click', () => setGameMode('cpu', 2));
-    document.getElementById('mode-cpu-3').addEventListener('click', () => setGameMode('cpu', 3));
-    document.getElementById('modal-open-rule').addEventListener('click', () => {
-        document.getElementById('mode-modal').style.display = 'none';
-        openRuleModal();
-    });
-    document.getElementById('rule-close-btn').addEventListener('click', () => {
-        document.getElementById('rule-modal').style.display = 'none';
-        if (!board.some(row => row.some(cell => cell !== null))) {
-            openModeModal();
-        }
-    });
+    const btnMode = document.getElementById('btn-mode');
+    const btnRule = document.getElementById('btn-rule');
+    const modePvp = document.getElementById('mode-pvp');
+    const modeCpu1 = document.getElementById('mode-cpu-1');
+    const modeCpu2 = document.getElementById('mode-cpu-2');
+    const modeCpu3 = document.getElementById('mode-cpu-3');
+    const modalOpenRule = document.getElementById('modal-open-rule');
+    const ruleCloseBtn = document.getElementById('rule-close-btn');
+
+    if (btnMode) btnMode.addEventListener('click', openModeModal);
+    if (btnRule) btnRule.addEventListener('click', openRuleModal);
+    if (modePvp) modePvp.addEventListener('click', () => setGameMode('pvp', 0));
+    if (modeCpu1) modeCpu1.addEventListener('click', () => setGameMode('cpu', 1));
+    if (modeCpu2) modeCpu2.addEventListener('click', () => setGameMode('cpu', 2));
+    if (modeCpu3) modeCpu3.addEventListener('click', () => setGameMode('cpu', 3));
+    
+    if (modalOpenRule) {
+        modalOpenRule.addEventListener('click', () => {
+            const modeModal = document.getElementById('mode-modal');
+            if (modeModal) modeModal.style.display = 'none';
+            openRuleModal();
+        });
+    }
+
+    if (ruleCloseBtn) {
+        ruleCloseBtn.addEventListener('click', () => {
+            const ruleModal = document.getElementById('rule-modal');
+            if (ruleModal) ruleModal.style.display = 'none';
+            if (!board.some(row => row.some(cell => cell !== null))) {
+                openModeModal();
+            }
+        });
+    }
 
     openModeModal();
     initBoard();
