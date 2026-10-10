@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F.I.R.E.到達年齢シミュレーター</title>
+<style>
+body{margin:0;background:#f5f6f8;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+.container{max-width:1100px;margin:auto;padding:20px}
+h1{font-size:28px;margin:0 0 8px}.lead{color:#666;margin:0 0 20px}
+.card{background:#fff;border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+h2{font-size:20px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+label{display:block;font-size:13px;color:#555;margin-bottom:5px}
+input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccd0d5;border-radius:8px;font-size:16px}
+button{border:0;border-radius:9px;background:#222;color:#fff;font-size:17px;font-weight:600;padding:13px 24px;cursor:pointer}
+button:active{transform:translateY(1px)}
+.action{text-align:center;margin:20px 0}
+.message{padding:14px;border-radius:9px;background:#f0f2f5;color:#666;text-align:center}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.metric{background:#f0f2f5;border-radius:10px;padding:12px}.metric strong{display:block;font-size:20px;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #eee;text-align:right}th:first-child,td:first-child{text-align:center}
+.scroll{overflow:auto}
+svg{width:100%;height:330px;display:block}
+.note{font-size:12px;color:#666;line-height:1.7}
+.good{background:#eef7ee}.warn{background:#fff8e8}.bad{background:#fdeeee}
+@media(max-width:600px){.container{padding:12px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>F.I.R.E.到達年齢シミュレーター</h1>
+<p class="lead">資産・生活費・年金・暴落条件を入力して、FIRE後の資産推移をシミュレーションします。</p>
+
+<div class="card">
+<h2>① 基本条件</h2>
+<div class="grid">
+<div><label>FIRE開始年齢</label><input id="start" type="number" placeholder="入力してください"></div>
+<div><label>終了年齢</label><input id="end" type="number" placeholder="入力してください"></div>
+<div><label>運用資産（万円）</label><input id="investment" type="number" placeholder="入力してください"></div>
+<div><label>現金（万円）</label><input id="cash" type="number" placeholder="入力してください"></div>
+<div><label>年間運用利回り（%）</label><input id="returnRate" type="number" step="0.1" placeholder="入力してください"></div>
+<div><label>インフレ率（%）</label><input id="inflation" type="number" step="0.1" placeholder="入力してください"></div>
+<div><label>年間生活費（開始〜59歳・万円）</label><input id="spendBefore60" type="number" placeholder="入力してください"></div>
+<div><label>年間生活費（60歳以降・万円）</label><input id="spendAfter60" type="number" placeholder="入力してください"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>② 年金</h2>
+<div class="grid">
+<div><label>65歳時点の年金見込額（万円/年）</label><input id="pensionBase" type="number" placeholder="入力してください"></div>
+<div><label>年金受給開始年齢（60〜75歳）</label><input id="pensionAge" type="number" min="60" max="75" placeholder="入力してください"></div>
+</div>
+<p id="pensionResult" class="message">年金額は「計算する」を押すと自動計算されます。</p>
+</div>
+
+<div class="card">
+<h2>③ FIRE直後の暴落</h2>
+<div class="grid">
+<div><label>FIRE直後の運用資産暴落率（%）</label><input id="crash" type="number" min="0" max="100" placeholder="入力してください"></div>
+</div>
+</div>
+
+<div class="action"><button type="button" onclick="runSimulation()">計算する</button></div>
+
+<div id="results">
+<div class="card"><div class="message">条件を入力して「計算する」を押してください。</div></div>
+</div>
+</div>
+
+<script>
+function getNumber(id){
+  var el=document.getElementById(id);
+  var v=el.value.trim();
+  return v==="" ? NaN : Number(v);
+}
+function fmt(v){
+  return Math.round(v).toLocaleString("ja-JP")+"万円";
+}
+function pensionFactor(age){
+  if(age<=65) return 1-(65-age)*12*0.004;
+  return 1+(age-65)*12*0.007;
+}
+function runSimulation(){
+  try{
+    var start=getNumber("start"), end=getNumber("end");
+    var investment=getNumber("investment"), cash=getNumber("cash");
+    var returnRate=getNumber("returnRate")/100;
+    var inflation=getNumber("inflation")/100;
+    var spendBefore60=getNumber("spendBefore60");
+    var spendAfter60=getNumber("spendAfter60");
+    var pensionBase=getNumber("pensionBase");
+    var pensionAge=getNumber("pensionAge");
+    var crash=getNumber("crash");
+
+    var values=[start,end,investment,cash,returnRate,inflation,spendBefore60,spendAfter60,pensionBase,pensionAge,crash];
+    for(var i=0;i<values.length;i++){
+      if(!Number.isFinite(values[i])){
+        alert("すべての入力項目を入力してください。");
+        return;
+      }
+    }
+    if(end<=start){alert("終了年齢はFIRE開始年齢より大きくしてください。");return;}
+    if(pensionAge<60 || pensionAge>75){alert("年金受給開始年齢は60〜75歳で入力してください。");return;}
+    if(crash<0 || crash>100){alert("暴落率は0〜100%で入力してください。");return;}
+
+    var factor=pensionFactor(pensionAge);
+    var adjustedPension=pensionBase*factor;
+
+    var inv=investment;
+    var cashNow=cash;
+    var data=[];
+
+    for(var age=start;age<=end;age++){
+      if(age===start) inv=inv*(1-crash/100);
+      inv=inv*(1+returnRate);
+
+      var spendBase=age<60 ? spendBefore60 : spendAfter60;
+      var spend=spendBase*Math.pow(1+inflation,age-start);
+
+      var pension=0;
+      if(age>=pensionAge){
+        pension=adjustedPension*Math.pow(1+inflation,age-pensionAge);
+      }
+
+      var need=Math.max(0,spend-pension);
+      var fromInv=Math.min(inv,need);
+      inv-=fromInv;
+      need-=fromInv;
+
+      var fromCash=Math.min(cashNow,need);
+      cashNow-=fromCash;
+      need-=fromCash;
+
+      data.push({
+        age:age,spend:spend,pension:pension,investment:inv,
+        cash:cashNow,total:inv+cashNow,shortfall:need
+      });
+    }
+
+    renderResults(data,factor,adjustedPension);
+  }catch(e){
+    alert("計算中にエラーが発生しました。入力値を確認してください。");
+  }
+}
+
+function renderResults(data,factor,adjustedPension){
+  var at=function(age){for(var i=0;i<data.length;i++)if(data[i].age===age)return data[i];return null;};
+  var invZero=null,totalZero=null,shortfall=null;
+  for(var i=0;i<data.length;i++){
+    if(!invZero && data[i].investment<=0) invZero=data[i];
+    if(!totalZero && data[i].total<=0) totalZero=data[i];
+    if(!shortfall && data[i].shortfall>0) shortfall=data[i];
+  }
+
+  var html="";
+  html+='<div class="card"><h2>結果</h2><div class="metrics">';
+  [60,70,80,90].forEach(function(age){
+    var x=at(age);
+    if(x) html+='<div class="metric">'+age+'歳 総資産<strong>'+fmt(x.total)+'</strong></div>';
+  });
+  html+='<div class="metric">運用資産枯渇<strong>'+(invZero?invZero.age+"歳":"なし")+'</strong></div>';
+  html+='<div class="metric">総資産枯渇<strong>'+(totalZero?totalZero.age+"歳":"なし")+'</strong></div>';
+  html+='</div></div>';
+
+  html+='<div class="card"><h2>年金</h2><p>受給開始：<strong>'+document.getElementById("pensionAge").value+'歳</strong> ／ 自動調整率：<strong>'+((factor*100).toFixed(1))+'%</strong> ／ 開始時年金：<strong>'+fmt(adjustedPension)+'/年</strong></p></div>';
+
+  html+='<div class="card"><h2>資産推移</h2><svg id="chart" viewBox="0 0 1000 330" preserveAspectRatio="none"></svg></div>';
+
+  html+='<div class="card"><h2>暴落率別比較</h2><div class="scroll"><table><thead><tr><th>暴落率</th><th>60歳</th><th>70歳</th><th>80歳</th><th>90歳</th><th>総資産枯渇</th></tr></thead><tbody>';
+  [0,10,20,30,40,50].forEach(function(rate){
+    var d=simulateWithCrash(rate);
+    html+='<tr><td>-'+rate+'%</td>';
+    [60,70,80,90].forEach(function(age){
+      var x=null;for(var j=0;j<d.length;j++)if(d[j].age===age)x=d[j];
+      html+='<td>'+(x?fmt(x.total):"—")+'</td>';
+    });
+    var z=null;for(var k=0;k<d.length;k++)if(d[k].total<=0){z=d[k];break;}
+    html+='<td>'+(z?z.age+"歳":"なし")+'</td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+
+  html+='<div class="card"><h2>年齢別推移</h2><div class="scroll"><table><thead><tr><th>年齢</th><th>生活費</th><th>年金</th><th>運用資産</th><th>現金</th><th>総資産</th></tr></thead><tbody>';
+  data.forEach(function(x){
+    html+='<tr><td>'+x.age+'</td><td>'+fmt(x.spend)+'</td><td>'+fmt(x.pension)+'</td><td>'+fmt(x.investment)+'</td><td>'+fmt(x.cash)+'</td><td>'+fmt(x.total)+'</td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+
+  html+='<div class="card note"><b>モデル上の注意</b><br>・指定した利回りを毎年一定とする簡易モデルです。<br>・暴落はFIRE開始直後に一度だけ発生します。<br>・税金、社会保険料、手数料、住宅購入、医療・介護費などは含みません。<br>・年金は65歳時点の見込額を基準に繰上げ/繰下げ率を反映し、受給開始後は設定したインフレ率で増えるモデルです。</div>';
+
+  document.getElementById("results").innerHTML=html;
+  drawChart(data);
+}
+
+function simulateWithCrash(crash){
+  var start=getNumber("start"),end=getNumber("end");
+  var inv=getNumber("investment"),cash=getNumber("cash");
+  var r=getNumber("returnRate")/100,inf=getNumber("inflation")/100;
+  var sb1=getNumber("spendBefore60"),sb2=getNumber("spendAfter60");
+  var pa=getNumber("pensionAge"),pb=getNumber("pensionBase");
+  var base=pb*pensionFactor(pa);
+  var out=[];
+  for(var age=start;age<=end;age++){
+    if(age===start) inv*=1-crash/100;
+    inv*=1+r;
+    var spend=(age<60?sb1:sb2)*Math.pow(1+inf,age-start);
+    var pension=age>=pa?base*Math.pow(1+inf,age-pa):0;
+    var need=Math.max(0,spend-pension);
+    var u=Math.min(inv,need);inv-=u;need-=u;
+    u=Math.min(cash,need);cash-=u;need-=u;
+    out.push({age:age,total:inv+cash,investment:inv,cash:cash,shortfall:need});
+  }
+  return out;
+}
+
+function drawChart(data){
+  var svg=document.getElementById("chart");
+  var W=1000,H=330,p=45;
+  var max=1;
+  for(var i=0;i<data.length;i++)max=Math.max(max,data[i].total);
+  var points="";
+  for(var j=0;j<data.length;j++){
+    var x=p+j*(W-2*p)/(data.length-1);
+    var y=H-p-(data[j].total/max)*(H-2*p);
+    points+=x+","+y+" ";
+  }
+  svg.innerHTML='<line x1="'+p+'" y1="'+(H-p)+'" x2="'+(W-p)+'" y2="'+(H-p)+'" stroke="#bbb"/>'+
+    '<line x1="'+p+'" y1="'+p+'" x2="'+p+'" y2="'+(H-p)+'" stroke="#bbb"/>'+
+    '<polyline points="'+points+'" fill="none" stroke="#222" stroke-width="3"/>'+
+    '<text x="'+p+'" y="20" font-size="14">総資産（万円）</text>'+
+    '<text x="'+p+'" y="'+(H-8)+'" font-size="12">'+data[0].age+'歳</text>'+
+    '<text x="'+(W-p-45)+'" y="'+(H-8)+'" font-size="12">'+data[data.length-1].age+'歳</text>';
+}
+</script>
+</body>
+</html>
