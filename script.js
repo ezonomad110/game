@@ -194,12 +194,25 @@ function render() {
             if (piece) {
                 const pDiv = document.createElement('div');
                 pDiv.className = `piece ${piece.owner} ${piece.types.length > 1 ? 'merged' : ''}`;
-                piece.types.forEach(p => {
+                
+                if (piece.types.length > 1) {
+                    const gridDiv = document.createElement('div');
+                    gridDiv.className = 'piece-grid';
+                    piece.types.forEach(p => {
+                        const sub = document.createElement('span');
+                        sub.className = `sub-piece ${p.isPromoted ? 'promoted' : ''}`;
+                        sub.textContent = p.isPromoted ? PIECE_TYPES[p.type].promoted : PIECE_TYPES[p.type].name;
+                        gridDiv.appendChild(sub);
+                    });
+                    pDiv.appendChild(gridDiv);
+                } else {
+                    const p = piece.types[0];
                     const sub = document.createElement('span');
                     sub.className = `sub-piece ${p.isPromoted ? 'promoted' : ''}`;
+                    sub.style.fontSize = '1.05rem';
                     sub.textContent = p.isPromoted ? PIECE_TYPES[p.type].promoted : PIECE_TYPES[p.type].name;
                     pDiv.appendChild(sub);
-                });
+                }
                 cell.appendChild(pDiv);
             }
             cell.addEventListener('click', () => handleCellClick(r, c));
@@ -208,7 +221,7 @@ function render() {
     }
 
     renderHands();
-    checkCheckStatus();
+    updateHUD();
 }
 
 function renderHands() {
@@ -228,10 +241,20 @@ function renderHands() {
     });
 }
 
-function checkCheckStatus() {
-    let statusText = `${turn === 'sente' ? '先手' : '後手'}の番です`;
-    let opponent = turn === 'sente' ? 'gote' : 'sente';
+function updateHUD() {
+    const senteHud = document.getElementById('sente-hud');
+    const goteHud = document.getElementById('gote-hud');
     
+    senteHud.classList.remove('active');
+    goteHud.classList.remove('active');
+    
+    if (turn === 'sente') {
+        senteHud.classList.add('active');
+    } else {
+        goteHud.classList.add('active');
+    }
+
+    let opponent = turn === 'sente' ? 'gote' : 'sente';
     let isChecking = false;
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
@@ -248,10 +271,7 @@ function checkCheckStatus() {
             }
         }
     }
-    if (isChecking) {
-        statusText = `⚠️ ${opponent === 'sente' ? '先手' : '後手'}に王手がかかっています！`;
-    }
-    document.getElementById('status').textContent = statusText;
+    // 必要に応じてステータス表示の拡張も可能
 }
 
 function handleCellClick(r, c) {
