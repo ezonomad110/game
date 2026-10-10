@@ -245,33 +245,16 @@ function updateHUD() {
     const senteHud = document.getElementById('sente-hud');
     const goteHud = document.getElementById('gote-hud');
     
-    senteHud.classList.remove('active');
-    goteHud.classList.remove('active');
-    
-    if (turn === 'sente') {
-        senteHud.classList.add('active');
-    } else {
-        goteHud.classList.add('active');
-    }
-
-    let opponent = turn === 'sente' ? 'gote' : 'sente';
-    let isChecking = false;
-    for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-            let p = board[r][c];
-            if (p && p.owner === turn) {
-                let moves = getMovableCoords(r, c, p);
-                if (moves.some(m => {
-                    let target = board[m.r][m.c];
-                    return target && target.owner === opponent && target.types.some(t => t.type === 8);
-                })) {
-                    isChecking = true;
-                    break;
-                }
-            }
+    if (senteHud && goteHud) {
+        senteHud.classList.remove('active');
+        goteHud.classList.remove('active');
+        
+        if (turn === 'sente') {
+            senteHud.classList.add('active');
+        } else {
+            goteHud.classList.add('active');
         }
     }
-    // 必要に応じてステータス表示の拡張も可能
 }
 
 function handleCellClick(r, c) {
