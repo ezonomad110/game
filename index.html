@@ -11,9 +11,9 @@
     <div class="header-area">
         <h1>重棋 <span class="header-ruby">(ちょうぎ)</span></h1>
         <div class="header-right">
-            <button class="header-btn" onclick="openModeModal()">モード設定</button>
-            <button class="header-btn" onclick="openRuleModal()">ルール</button>
-            <span class="version-badge">[v3.11]</span>
+            <button class="header-btn" id="btn-mode">モード設定</button>
+            <button class="header-btn" id="btn-rule">ルール</button>
+            <span class="version-badge">[v3.13]</span>
         </div>
     </div>
 
@@ -57,11 +57,11 @@
         <div class="modal-content">
             <h2>対局モードを選択</h2>
             <div class="modal-buttons">
-                <button class="mode-select-btn" onclick="setGameMode('pvp', 0)">対人戦 (2人プレイ)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 1)">vs CPU (初級)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 2)">vs CPU (中級)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 3)">vs CPU (上級・強)</button>
-                <button class="mode-select-btn rule-open-btn" onclick="openRuleModalFromModal()">ルールを読む</button>
+                <button class="mode-select-btn" id="mode-pvp">対人戦 (2人プレイ)</button>
+                <button class="mode-select-btn cpu-btn" id="mode-cpu-1">vs CPU (初級)</button>
+                <button class="mode-select-btn cpu-btn" id="mode-cpu-2">vs CPU (中級)</button>
+                <button class="mode-select-btn cpu-btn" id="mode-cpu-3">vs CPU (上級・強)</button>
+                <button class="mode-select-btn rule-open-btn" id="modal-open-rule">ルールを読む</button>
             </div>
         </div>
     </div>
@@ -80,7 +80,7 @@
                 </ul>
                 <p><strong>3. 勝利条件:</strong> 相手の王将を捕らえた方の勝ちとなります。</p>
             </div>
-            <button class="mode-select-btn" onclick="closeRuleModal()">閉じる</button>
+            <button class="mode-select-btn" id="rule-close-btn">閉じる</button>
         </div>
     </div>
 
