@@ -59,18 +59,6 @@ function openRuleModal() {
     document.getElementById('rule-modal').style.display = 'flex';
 }
 
-function openRuleModalFromModal() {
-    document.getElementById('mode-modal').style.display = 'none';
-    document.getElementById('rule-modal').style.display = 'flex';
-}
-
-function closeRuleModal() {
-    document.getElementById('rule-modal').style.display = 'none';
-    if (!board.some(row => row.some(cell => cell !== null))) {
-        openModeModal();
-    }
-}
-
 function setGameMode(mode, level) {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') {
@@ -529,6 +517,26 @@ function runCpuTurn() {
     render();
 }
 
+// イベントリスナーを確実にバインドして、ボタンが動かない問題を完全に解消
 document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('btn-mode').addEventListener('click', openModeModal);
+    document.getElementById('btn-rule').addEventListener('click', openRuleModal);
+    document.getElementById('mode-pvp').addEventListener('click', () => setGameMode('pvp', 0));
+    document.getElementById('mode-cpu-1').addEventListener('click', () => setGameMode('cpu', 1));
+    document.getElementById('mode-cpu-2').addEventListener('click', () => setGameMode('cpu', 2));
+    document.getElementById('mode-cpu-3').addEventListener('click', () => setGameMode('cpu', 3));
+    document.getElementById('modal-open-rule').addEventListener('click', () => {
+        document.getElementById('mode-modal').style.display = 'none';
+        openRuleModal();
+    });
+    document.getElementById('rule-close-btn').addEventListener('click', () => {
+        document.getElementById('rule-modal').style.display = 'none';
+        if (!board.some(row => row.some(cell => cell !== null))) {
+            openModeModal();
+        }
+    });
+
     openModeModal();
+    initBoard();
+    render();
 });
