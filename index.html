@@ -2,32 +2,34 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>重棋 (Chogi)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重将棋 (ちょうぎ)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="header-area">
-        <h1>重棋 <span class="header-ruby">(ちょうぎ)</span></h1>
+        <div>
+            <h1>重将棋 <span class="header-ruby">(ちょうぎ)</span></h1>
+        </div>
         <div class="header-right">
             <button class="header-btn" onclick="openModeModal()">モード設定</button>
-            <span class="version-badge">[v3.20]</span>
+            <span id="version-badge" class="version-badge">[v3.26]</span>
         </div>
     </div>
 
-    <!-- 後手エリア -->
-    <div class="player-hud gote-hud" id="gote-hud">
+    <!-- プレイヤーHUD：後手 (CPU) -->
+    <div id="gote-hud" class="player-hud">
         <div class="hud-info">
-            <span class="player-name" id="gote-name">後手 (CPU)</span>
+            <span id="gote-name" class="player-name">後手 (CPU:中級)</span>
             <span class="turn-indicator">▼ 手番</span>
         </div>
-        <div class="hand-container" id="gote-hand">
-            <div id="gote-hand-pieces" class="hand-pieces-inner gote-pieces"></div>
+        <div class="hand-container">
+            <div id="gote-hand-pieces" class="hand-pieces-inner"></div>
         </div>
     </div>
 
-    <!-- 座標付き将棋盤 -->
+    <!-- 将棋盤 -->
     <div class="shogi-board-wrapper">
         <div class="coords-top">
             <span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
@@ -40,46 +42,52 @@
         </div>
     </div>
 
-    <!-- 先手エリア -->
-    <div class="player-hud sente-hud" id="sente-hud">
-        <div class="hand-container" id="sente-hand">
-            <div id="sente-hand-pieces" class="hand-pieces-inner"></div>
-        </div>
+    <!-- プレイヤーHUD：先手 (あなた) -->
+    <div id="sente-hud" class="player-hud active" style="margin-top: 4px;">
         <div class="hud-info">
-            <span class="player-name" id="sente-name">先手 (あなた)</span>
+            <span class="player-name">先手 (あなた)</span>
             <span class="turn-indicator">▲ 手番</span>
         </div>
+        <div class="hand-container">
+            <div id="sente-hand-pieces" class="hand-pieces-inner"></div>
+        </div>
     </div>
 
-    <!-- モード・難易度選択モーダル -->
-    <div id="mode-modal" class="modal-overlay" style="display: flex;">
+    <!-- モード選択モーダル -->
+    <div id="mode-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>対局モードを選択</h2>
+            <h2>重将棋へようこそ</h2>
+            <p style="font-size: 0.85rem; color: #d0c0a0; margin: 8px 0;">駒を重ねて合体できる変則将棋</p>
             <div class="modal-buttons">
-                <button class="mode-select-btn" onclick="setGameMode('pvp', 0)">対人戦 (2人プレイ)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 1)">vs CPU (初級)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 2)">vs CPU (中級)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 3)">vs CPU (上級・強)</button>
-                <button class="mode-select-btn rule-open-btn" onclick="openRuleModalFromModal()">ルールを読む</button>
+                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 1)">対CPU戦 (初級)</button>
+                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 2)">対CPU戦 (中級)</button>
+                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 3)">対CPU戦 (上級・強)</button>
+                <button class="mode-select-btn" onclick="setGameMode('pvp', 0)">二人対戦 (PvP)</button>
+                <button class="mode-select-btn rule-open-btn" onclick="openRuleModalFromModal()">遊び方・ルール</button>
             </div>
         </div>
     </div>
 
-    <!-- ルールブック モーダル -->
+    <!-- ルール説明モーダル -->
     <div id="rule-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content rule-modal-content">
-            <h2>重棋 (Chogi) ルール</h2>
+            <h2>遊び方・ルール</h2>
             <div class="rule-body">
-                <p><strong>1. 概要:</strong> 通常の9×9将棋盤で、自分の駒同士を重ねてパワーアップさせるゲームです。<strong>重ねた駒は、含まれているすべての駒の動きを組み合わせて移動させることができます。</strong></p>
-                <p><strong>2. 合体（スタッキング）制限:</strong></p>
+                <p><strong>【基本ルール】</strong></p>
                 <ul>
-                    <li>1つのマスに重ねられるのは<strong>最大4つまで</strong>です（5個以上の合体や移動は不可）。</li>
-                    <li>自分の「歩」との合体は禁止です。「二歩」も禁止されています。</li>
-                    <li>王将（玉将）は他の駒と合体できません。</li>
+                    <li>通常の将棋の駒に加え、同じマスに最大4つまで駒を重ねて合体（スタッキング）させることができます。</li>
+                    <li>合体した駒は、構成するすべての駒の動きを同時に持ちます。</li>
+                    <li>王将（玉将）を先手・後手ともに最初から持っており、王を囲うか相手の王を捉えると勝利です。</li>
                 </ul>
-                <p><strong>3. 勝利条件:</strong> 相手の王将を捕らえた方の勝ちとなります。</p>
+                <p><strong>【操作方法】</strong></p>
+                <ul>
+                    <li>自分の駒をクリックすると移動可能なマスが緑のドットで表示されます。</li>
+                    <li>相手の駒があるマスに重なると、その駒と合体します（所有権や色は維持されます）。</li>
+                </ul>
             </div>
-            <button class="mode-select-btn" onclick="closeRuleModal()">閉じる</button>
+            <div class="modal-buttons">
+                <button class="mode-select-btn" onclick="closeRuleModal()">戻る</button>
+            </div>
         </div>
     </div>
 
