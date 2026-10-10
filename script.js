@@ -45,36 +45,25 @@ let hands = { sente: [], gote: [] };
 
 let turn = 'sente';
 let gameMode = 'cpu';
-let cpuLevel = 2; // デフォルト中級
+let cpuLevel = 2;
 let selectedCoord = null;
 let selectedHandIndex = null;
 let movableCoords = [];
 let isCpuThinking = false;
 
 function openModeModal() {
-    const modal = document.getElementById('mode-modal');
-    if (modal) modal.style.display = 'flex';
-}
-
-function openRuleModal() {
-    const modal = document.getElementById('rule-modal');
-    if (modal) modal.style.display = 'flex';
+    document.getElementById('mode-modal').style.display = 'flex';
+    document.getElementById('rule-modal').style.display = 'none';
 }
 
 function openRuleModalFromModal() {
-    const modeModal = document.getElementById('mode-modal');
-    if (modeModal) modeModal.style.display = 'none';
-    openRuleModal();
+    document.getElementById('mode-modal').style.display = 'none';
+    document.getElementById('rule-modal').style.display = 'flex';
 }
 
 function closeRuleModal() {
-    const ruleModal = document.getElementById('rule-modal');
-    if (ruleModal) ruleModal.style.display = 'none';
-    
-    // 盤面がまだ初期化されていない（最初の起動時）ならモード選択に戻す
-    if (!board.some(row => row.some(cell => cell !== null))) {
-        openModeModal();
-    }
+    document.getElementById('rule-modal').style.display = 'none';
+    document.getElementById('mode-modal').style.display = 'flex';
 }
 
 function setGameMode(mode, level) {
@@ -87,8 +76,7 @@ function setGameMode(mode, level) {
     gameMode = mode;
     cpuLevel = level;
     
-    const modeModal = document.getElementById('mode-modal');
-    if (modeModal) modeModal.style.display = 'none';
+    document.getElementById('mode-modal').style.display = 'none';
 
     const goteName = document.getElementById('gote-name');
     if (goteName) {
