@@ -92,7 +92,7 @@ function getMovableCoords(r, c, pieceObj) {
             // 王との合体禁止
             if (pieceObj.types.some(t => t.type === 8) || target.types.some(t => t.type === 8)) return false;
             
-            // 【最大4つまで】合体後の合計枚数が4枚を超える移動は不可
+            // 【厳格制限】合体後の合計枚数が4枚を超える（5枚以上になる）移動は絶対に不可
             if (target.types.length + pieceObj.types.length > 4) return false;
             
             // 自分の「歩」とは合体できないルール
@@ -316,12 +316,16 @@ function executeMove(fromR, fromC, toR, toC) {
 
     if (target) {
         if (target.owner === moving.owner) {
+            if (target.types.length + moving.types.length > 4) {
+                alert("駒は最大4つまでしか重ねられません！");
+                return;
+            }
             target.types.push(...moving.types);
             board[fromR][fromC] = null;
         } else {
             if (target.types.some(t => t.type === 8)) {
                 playPachiSound();
-5                render();
+                render();
                 setTimeout(() => {
                     alert(`${turn === 'sente' ? '先手' : '後手'}の勝利です！（王将を捕らえました）`);
                     initBoard();
