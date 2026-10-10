@@ -234,10 +234,11 @@ h1 {
     color: #2b2b2b;
 }
 
-/* 後手（CPU/相手）の駒：深みのある赤茶系 */
+/* 後手（CPU/相手）の駒：深みのある赤茶系 ＋ 【文字を180度回転させて逆さまにする】 */
 .piece.gote {
     background: linear-gradient(135deg, #d89a72, #b26841);
     color: #fff9f0;
+    transform: rotate(180deg);
 }
 
 /* 合体（スタッキング）した駒 */
@@ -245,20 +246,7 @@ h1 {
     background: linear-gradient(135deg, #ffeaa7, #fdcb6e) !important;
     color: #2d3436 !important;
     box-shadow: 0 0 6px rgba(253, 203, 110, 0.7);
-}
-
-/* 後手の駒の中身（文字・グリッド）のみを逆さまにする */
-.piece.gote .piece-content-inner {
-    transform: rotate(180deg);
-}
-
-/* 通常（単体）の駒のコンテンツ領域 */
-.piece-content-inner {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transform: none; /* 合体駒は所有者側の向きに合わせるため回転なし */
 }
 
 /* 単体駒のテキスト */
