@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>重将棋 (ちょうぎ)</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- style.css v3.30 -->
+    <link rel="stylesheet" href="style.css?v=3.30">
 </head>
 <body>
 
@@ -14,7 +15,12 @@
         </div>
         <div class="header-right">
             <button class="header-btn" onclick="openModeModal()">モード設定</button>
-            <span id="version-badge" class="version-badge">[v3.27]</span>
+            <!-- 各ファイルのバージョン個別表示 -->
+            <div id="version-badge" class="version-badge">
+                HTML: v3.30<br>
+                JS: <span id="js-version">読み込み中...</span><br>
+                CSS: v3.30
+            </div>
         </div>
     </div>
 
@@ -81,14 +87,14 @@
             <div class="rule-body">
                 <p><strong>【基本ルール】</strong></p>
                 <ul>
-                    <li>通常の将棋の駒に加え、同じマスに最大4つまで駒を重ねて合体（スタッキング）させることができます。</li>
-                    <li>合体した駒は、構成するすべての駒の動きを同時に持ちます。</li>
+                    <li>通常の将棋の駒に加え、同じマスに最大4つまで自分の駒を重ねて合体させることができます。</li>
+                    <li>相手の駒がいるマスには移動して駒を取る（キャプチャする）ことができます（合体はできません）。</li>
                     <li>王将（玉将）を先手・後手ともに最初から持っており、王を囲うか相手の王を捉えると勝利です。</li>
                 </ul>
                 <p><strong>【操作方法】</strong></p>
                 <ul>
                     <li>自分の駒をクリックすると移動可能なマスが緑のドットで表示されます。</li>
-                    <li>相手の駒があるマスに重なると、その駒と合体します。</li>
+                    <li>自分の駒があるマスに重ねると合体します（所有権や色は変わりません）。</li>
                 </ul>
             </div>
             <div class="modal-buttons">
@@ -97,6 +103,7 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- script.js v3.30 -->
+    <script src="script.js?v=3.30"></script>
 </body>
 </html>
