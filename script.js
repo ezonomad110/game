@@ -42,8 +42,12 @@ const PIECE_VALUES = {
     1: 1, 2: 3, 3: 3, 4: 4, 5: 5, 6: 9, 7: 12, 8: 1500
 };
 
+const COL_NAMES = [null, '1', '2', '3', '4', '5', '6', '7', '8', '9'].reverse(); // 9～1
+const ROW_NAMES = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+
 let board = Array(9).fill(null).map(() => Array(9).fill(null));
 let hands = { sente: [], gote: [] };
+let gameLogs = [];
 
 let turn = 'sente';
 let gameMode = 'cpu';
@@ -56,8 +60,33 @@ let isCpuThinking = false;
 function updateVersionBadge() {
     const badge = document.getElementById('version-badge');
     if (badge) {
-        badge.textContent = '[v3.26]';
+        badge.textContent = '[v3.27]';
     }
+}
+
+function addGameLog(message) {
+    gameLogs.unshift(message);
+    if (gameLogs.log > 30) gameLogs.pop();
+    renderLogs();
+}
+
+function renderLogs() {
+    const container = document.getElementById('game-log-container');
+    if (!container) return;
+    container.innerHTML = '';
+    gameLogs.forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.textContent = log;
+        container.appendChild(item);
+    });
+}
+
+function getPieceNamesStr(pieceObj) {
+    return pieceObj.types.map(t => {
+        let n = t.isPromoted ? PIECE_DISPLAY_NAMES[t.type].promoted : PIECE_DISPLAY_NAMES[t.type].name;
+        return n;
+    }).join('+');
 }
 
 function openModeModal() {
@@ -77,10 +106,8 @@ function closeRuleModal() {
 
 function setGameMode(mode, level) {
     playPachiSound();
-
     gameMode = mode;
     cpuLevel = level;
-    
     document.getElementById('mode-modal').style.display = 'none';
 
     const goteName = document.getElementById('gote-name');
@@ -99,6 +126,7 @@ function setGameMode(mode, level) {
 function initBoard() {
     board = Array(9).fill(null).map(() => Array(9).fill(null));
     hands = { sente: [], gote: [] };
+    gameLogs = [];
 
     const setupLine = [2, 3, 4, 5, 8, 5, 4, 3, 2];
 
@@ -115,6 +143,7 @@ function initBoard() {
     turn = 'sente';
     resetSelection();
     updateVersionBadge();
+    addGameLog("対局を開始しました。");
 }
 
 function createPieceObj(types, owner) {
@@ -275,9 +304,7 @@ function render() {
             const piece = board[r][c];
             if (piece) {
                 const pDiv = document.createElement('div');
-                // ⭐️ owner プロパティを確実にクラスとして付与する（未定義なら 'sente' をフォールバック）
-                const ownerClass = (piece.owner === 'gote') ? 'gote' : 'sente';
-                pDiv.className = `piece ${ownerClass} ${piece.types.length > 1 ? 'merged' : ''}`;
+                pDiv.className = `piece ${piece.owner} ${piece.types.length > 1 ? 'merged' : ''}`;
                 
                 const innerDiv = document.createElement('div');
                 innerDiv.className = 'piece-content-inner';
@@ -309,6 +336,7 @@ function render() {
 
     renderHands();
     updateHUD();
+    renderLogs();
     updateVersionBadge();
 }
 
@@ -360,6 +388,12 @@ function handleCellClick(r, c) {
 
         hands[turn].splice(selectedHandIndex, 1);
         board[r][c] = createPieceObj([pieceType], turn);
+        
+        let pName = PIECE_DISPLAY_NAMES[pieceType].name;
+        let posStr = `${9 - c}${ROW_NAMES[r]}`;
+        let playerStr = turn === 'sente' ? '先手' : '後手';
+        addGameLog(`${playerStr}: ${pName}を ${posStr} に打つ`);
+
         playPachiSound();
         resetSelection();
         switchTurn();
@@ -407,6 +441,10 @@ function resetSelection() {
 function executeMove(fromR, fromC, toR, toC) {
     let moving = board[fromR][fromC];
     let target = board[toR][toC];
+    let playerStr = turn === 'sente' ? '先手' : '後手';
+    let fromStr = `${9 - fromC}${ROW_NAMES[fromR]}`;
+    let toStr = `${9 - toC}${ROW_NAMES[toR]}`;
+    let movingName = getPieceNamesStr(moving);
 
     if (target) {
         if (target.owner === moving.owner) {
@@ -414,12 +452,15 @@ function executeMove(fromR, fromC, toR, toC) {
                 alert("駒は最大4つまでしか重ねられません！");
                 return;
             }
-            let originalOwner = target.owner;
+            let targetNameBefore = getPieceNamesStr(target);
             target.types.push(...moving.types);
-            target.owner = originalOwner;
+            let targetNameAfter = getPieceNamesStr(target);
             board[fromR][fromC] = null;
+            
+            addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し [${targetNameBefore}] と合体 (${targetNameAfter})`);
         } else {
             if (target.types.some(t => t.type === 8)) {
+                addGameLog(`${playerStr}: 王をキャプチャ！`);
                 playPachiSound();
                 render();
                 setTimeout(() => {
@@ -433,9 +474,13 @@ function executeMove(fromR, fromC, toR, toC) {
 
             if (target.types.length + moving.types.length <= 4) {
                 let originalTargetOwner = target.owner;
+                let targetNameBefore = getPieceNamesStr(target);
                 target.types.push(...moving.types);
                 target.owner = originalTargetOwner;
+                let targetNameAfter = getPieceNamesStr(target);
                 board[fromR][fromC] = null;
+
+                addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ攻め込み、相手の [${targetNameBefore}] と合体 (${targetNameAfter})`);
             } else {
                 alert("駒は最大4つまでしか重ねられません！");
                 return;
@@ -445,6 +490,7 @@ function executeMove(fromR, fromC, toR, toC) {
         board[toR][toC] = moving;
         board[fromR][fromC] = null;
         checkPromotion(board[toR][toC], fromR, toR, turn);
+        addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動`);
     }
     playPachiSound();
 }
@@ -459,6 +505,7 @@ function checkPromotion(pieceObj, fromR, toR, playerTurn) {
                 if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
                     if (confirm(`${PIECE_DISPLAY_NAMES[p.type].name} を 成りますか？`)) {
                         p.isPromoted = true;
+                        addGameLog(`${playerTurn === 'sente' ? '先手' : '後手'}: ${PIECE_DISPLAY_NAMES[p.type].name} を成りました`);
                     }
                 }
             });
@@ -466,6 +513,7 @@ function checkPromotion(pieceObj, fromR, toR, playerTurn) {
             pieceObj.types.forEach(p => {
                 if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
                     p.isPromoted = true;
+                    addGameLog(`後手(CPU): ${PIECE_DISPLAY_NAMES[p.type].name} を成りました`);
                 }
             });
         }
@@ -505,6 +553,7 @@ function runCpuTurn() {
     });
 
     if (allMoves.length === 0) {
+        addGameLog("後手（CPU）の指せる手がないため先手の勝利です。");
         alert("後手（CPU）の指せる手がありません。先手の勝利です！");
         isCpuThinking = false;
         openModeModal();
@@ -603,6 +652,9 @@ function runCpuTurn() {
     } else if (bestMove.type === 'drop') {
         hands['gote'].splice(bestMove.handIndex, 1);
         board[bestMove.toR][bestMove.toC] = createPieceObj([bestMove.pieceType], 'gote');
+        let pName = PIECE_DISPLAY_NAMES[bestMove.pieceType].name;
+        let posStr = `${9 - bestMove.toC}${ROW_NAMES[bestMove.toR]}`;
+        addGameLog(`後手(CPU): ${pName}を ${posStr} に打つ`);
         playPachiSound();
     }
 
