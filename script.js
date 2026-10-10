@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.40';
+const SCRIPT_VERSION = 'v3.41';
 
 let audioCtx = null;
 
@@ -34,7 +34,6 @@ function playPachiSound() {
     } catch (e) {}
 }
 
-// すべて元の駒の名前に統一（成った場合は赤字で区別）
 const PIECE_DISPLAY_NAMES = {
     1: { name: '歩', promoted: '歩' },
     2: { name: '香', promoted: '香' },
@@ -46,9 +45,26 @@ const PIECE_DISPLAY_NAMES = {
     8: { name: '王', promoted: null }
 };
 
+// 駒ごとの基本価値
 const PIECE_VALUES = {
-    1: 1, 2: 3, 3: 3, 4: 4, 5: 5, 6: 9, 7: 12, 8: 1500
+    1: 1, 2: 3, 3: 3, 4: 4, 5: 6, 6: 10, 7: 14, 8: 2000
 };
+
+// 駒オブジェクト全体の価値を計算（重なりや成りも考慮）
+function getPieceTotalValue(pieceObj) {
+    if (!pieceObj || !pieceObj.types) return 0;
+    let baseSum = 0;
+    pieceObj.types.forEach(t => {
+        let val = PIECE_VALUES[t.type] || 1;
+        if (t.isPromoted) val += 2; // 成り駒は少し価値アップ
+        baseSum += val;
+    });
+    // 重なっている（スタック）場合、連携ボーナスを加算して重要度を高める
+    if (pieceObj.types.length > 1) {
+        baseSum *= 1.35;
+    }
+    return baseSum;
+}
 
 const ROW_NAMES = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
 
@@ -596,7 +612,7 @@ function runCpuTurn() {
         let isKingInCheck = goteKing ? isSquareUnderAttack(goteKing.r, goteKing.c, 'sente') : false;
 
         let scoredMoves = allMoves.map(move => {
-            let score = Math.random() * (cpuLevel === 3 ? 1 : 3);
+            let score = Math.random() * (cpuLevel === 3 ? 0.5 : 2);
 
             let movingPiece = null;
             let targetPiece = null;
@@ -622,13 +638,41 @@ function runCpuTurn() {
                 board[move.toR][move.toC] = createPieceObj([move.pieceType], 'gote');
             }
 
+            // 自王の安全確認（王手放置は厳禁）
             let newGoteKing = findKingCoord('gote');
             let willBeInCheck = newGoteKing ? isSquareUnderAttack(newGoteKing.r, newGoteKing.c, 'sente') : false;
 
             if (willBeInCheck) {
-                score -= 10000;
+                score -= 50000;
             } else if (isKingInCheck) {
-                score += 5000;
+                score += 15000; // 王手からの逃げ・対応に高得点
+            }
+
+            // 【防衛強化】自分の王の近くに敵が迫っているときの危機感と対応ボーナス
+            if (newGoteKing) {
+                let sentePiecesThreatening = 0;
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        let sp = board[r][c];
+                        if (sp && sp.owner === 'sente') {
+                            let distToKing = Math.abs(r - newGoteKing.r) + Math.abs(c - newGoteKing.c);
+                            if (distToKing <= 2) {
+                                sentePiecesThreatening += getPieceTotalValue(sp);
+                            }
+                        }
+                    }
+                }
+                // 敵が自王の近くにいる場合、王を遠ざける手や、王の周囲に駒を寄せる・合体させる手にボーナス
+                if (sentePiecesThreatening > 3) {
+                    let moveDistToKing = Math.abs(move.toR - newGoteKing.r) + Math.abs(move.toC - newGoteKing.c);
+                    if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
+                        if (moveDistToKing > (Math.abs(move.fromR - newGoteKing.r) + Math.abs(move.fromC - newGoteKing.c))) {
+                            score += 8000; // 王を危険から逃がす手
+                        }
+                    } else if (moveDistToKing <= 2) {
+                        score += 3000; // 王の近くに守り駒を寄せる・重ねる手
+                    }
+                }
             }
 
             let senteKing = findKingCoord('sente');
@@ -637,28 +681,46 @@ function runCpuTurn() {
             if (move.type === 'board') {
                 if (targetPiece && targetPiece.owner === 'sente' && targetPiece.types.some(t => t.type === 8)) {
                     isCapturingKing = true;
-                    score += 999999;
+                    score += 999999; // 王獲得は最優先
                 } else if (targetPiece) {
                     if (targetPiece.owner === 'sente') {
-                        score += 500;
+                        // 相手の駒を取る場合、その「価値の高さ」に応じた報酬を与える
+                        let capturedVal = getPieceTotalValue(targetPiece);
+                        score += capturedVal * 120;
                     } else {
+                        // 自分の駒と合体する場合、強力なスタックを作る手にボーナス
                         let stackCountAfter = targetPiece.types.length + movingPiece.types.length;
-                        score += stackCountAfter * 25;
+                        score += stackCountAfter * 150;
+                    }
+                }
+
+                // 【無駄な王手の排除 ＆ 有効な王手の評価】
+                // 動いた後の位置から相手の王に対して王手をかけているかチェック
+                let isCheckingSente = senteKing ? getMovableCoords(move.toR, move.toC, board[move.toR][move.toC]).some(m => m.r === senteKing.r && m.c === senteKing.c) : false;
+                if (isCheckingSente) {
+                    let movingVal = getPieceTotalValue(board[move.toR][move.toC]);
+                    // 単体の歩（価値が低い）や、相手の利き（攻撃）の中に単体で飛び込むような無駄な王手はペナルティ
+                    let isUnderAttackBySente = isSquareUnderAttack(move.toR, move.toC, 'sente');
+                    if (movingVal <= 1 && isUnderAttackBySente) {
+                        score -= 5000; // 無駄な歩の王手はしない！
+                    } else {
+                        score += 4000; // 価値のある駒や合体駒による有効な王手は積極的に狙う
                     }
                 }
 
                 if (!isCapturingKing && cpuLevel === 3) {
-                    score += move.toR * 8;
+                    score += move.toR * 6;
                     if (senteKing) {
                         let dist = Math.abs(move.toR - senteKing.r) + Math.abs(move.toC - senteKing.c);
-                        if (dist <= 2) score += (3 - dist) * 50;
+                        if (dist <= 2) score += (3 - dist) * 40;
                     }
                 } else if (!isCapturingKing) {
                     score += move.toR;
                 }
             } else if (move.type === 'drop') {
-                score += PIECE_VALUES[move.pieceType] * 12;
-                if (move.toR >= 5) score += 30;
+                // 持ち駒を打つ場合の評価（価値の高い駒を効果的に使う）
+                score += PIECE_VALUES[move.pieceType] * 40;
+                if (move.toR >= 5) score += 50;
             }
 
             if (move.type === 'board') {
