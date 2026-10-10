@@ -1,4 +1,12 @@
-const SCRIPT_VERSION = 'v3.47';
+CPUのさらなる賢さアップに向け、以下の改善を行います！
+🧠 今回の改善方針 (v3.48)
+ * 王（玉）が不用意に前に飛び出すのを抑制
+   * 王が安全な自陣（玉型）を離れて敵陣や前線へうろつく行動に大きなペナルティ（マイナス評価）を与えます。「王は逃げるときや安全な場所を好むが、不用意に最前線に出て歩や駒を拾いに行く」ような自殺行為を防止します。
+ * 大駒（飛車・角）の無駄なウロウロ（意味のない横移動）を抑制
+   * 飛車や角などの大駒が、敵を攻撃するわけでも自陣を守るわけでもなく、ただ左右にフラフラと移動する手を減らすため、有効な目的（敵陣への利き、王手、駒取りなど）がない場合の移動評価を少し引き下げます。
+それでは、この調整を反映した最新の script.js (v3.48) のコードを作成しました。以下のコードをコピーして上書きしてください（HTMLとCSSの変更はありません）。
+script.js (v3.48)
+const SCRIPT_VERSION = 'v3.48';
 
 let audioCtx = null;
 
@@ -743,19 +751,37 @@ async function runCpuTurn() {
                 score += 15000;
             }
 
-            // 【強化版】タダ捨て防止＆損な交換の防止（移動・駒取り共通）
+            // 【新機能】王が不用意に前に飛び出す行動をペナルティ
+            if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
+                // 後手の初期陣地は行0～2。行3以上に王が前進する場合はペナルティを与える
+                if (move.toR >= 3) {
+                    score -= (move.toR - 2) * 1500; 
+                }
+            }
+
+            // 【新機能】大駒（飛車・角）が無意味にウロウロするのを抑制
+            if (move.type === 'board' && movingPiece) {
+                let isMajorPiece = movingPiece.types.some(t => t.type === 6 || t.type === 7);
+                if (isMajorPiece && !targetPiece) {
+                    let isCheckingSente = findKingCoord('sente') ? getMovableCoords(move.toR, move.toC, movingPiece).some(m => m.r === findKingCoord('sente').r && m.c === findKingCoord('sente').c) : false;
+                    if (!isCheckingSente && move.toR < 5) {
+                        // 目的のない中途半端な大駒の移動は少しマイナス
+                        score -= 50;
+                    }
+                }
+            }
+
             let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
             let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
             
             if (isUnderSenteAttack && !isProtectedByGote) {
                 let pieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
-                score -= pieceVal * 400; // ペナルティを強化して自滅を防ぐ
+                score -= pieceVal * 400;
             } else if (isUnderSenteAttack && targetPiece && targetPiece.owner === 'sente') {
-                // 駒を取りに行くが、相手の利きがある場合（損な交換になるかをチェック）
                 let myPieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
                 let capturedVal = getPieceTotalValue(targetPiece);
                 if (myPieceVal > capturedVal) {
-                    score -= (myPieceVal - capturedVal) * 200; // 割に合わない駒交換を回避
+                    score -= (myPieceVal - capturedVal) * 200;
                 }
             }
 
@@ -859,3 +885,4 @@ async function runCpuTurn() {
 
 initBoard();
 render();
+
