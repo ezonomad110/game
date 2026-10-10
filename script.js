@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.45';
+const SCRIPT_VERSION = 'v3.46';
 
 let audioCtx = null;
 
@@ -80,6 +80,9 @@ let isGameOver = false;
 
 let lastMove = null;
 let historyStack = [];
+
+// 成り確認モーダル用のコールバック変数
+let promoteResolver = null;
 
 function updateVersionBadge() {
     const jsVerSpan = document.getElementById('js-version');
@@ -183,7 +186,6 @@ function createPieceObj(types, owner) {
     };
 }
 
-// 現在の状態をディープコピーして履歴に保存する
 function saveHistory() {
     let boardCopy = board.map(row => row.map(cell => {
         if (!cell) return null;
@@ -204,7 +206,6 @@ function saveHistory() {
     });
 }
 
-// 待った機能
 function undoMove() {
     if (isGameOver) {
         alert("対局はすでに終了しています。");
@@ -215,8 +216,6 @@ function undoMove() {
         return;
     }
 
-    // 対CPU戦の場合、プレイヤーの手番に戻るために2手戻す（プレイヤーの直前の手＋CPUの手）
-    // PvPの場合は1手戻す
     let stepsToUndo = (gameMode === 'cpu' && historyStack.length >= 2) ? 2 : 1;
     let prevState = null;
 
@@ -481,7 +480,7 @@ function updateHUD() {
     }
 }
 
-function handleCellClick(r, c) {
+async function handleCellClick(r, c) {
     if (isGameOver) return;
     if (gameMode === 'cpu' && turn === 'gote' && isCpuThinking) return;
 
@@ -492,7 +491,7 @@ function handleCellClick(r, c) {
             return;
         }
 
-        saveHistory(); // 手を指す前に履歴保存
+        saveHistory();
 
         hands[turn].splice(selectedHandIndex, 1);
         board[r][c] = createPieceObj([pieceType], turn);
@@ -511,8 +510,8 @@ function handleCellClick(r, c) {
     }
 
     if (selectedCoord && movableCoords.some(m => m.r === r && m.c === c)) {
-        saveHistory(); // 手を指す前に履歴保存
-        executeMove(selectedCoord.r, selectedCoord.c, r, c);
+        saveHistory();
+        await executeMove(selectedCoord.r, selectedCoord.c, r, c);
         resetSelection();
         if (!isGameOver) {
             switchTurn();
@@ -552,7 +551,7 @@ function resetSelection() {
     movableCoords = [];
 }
 
-function executeMove(fromR, fromC, toR, toC) {
+async function executeMove(fromR, fromC, toR, toC) {
     let moving = board[fromR][fromC];
     let target = board[toR][toC];
     let playerStr = turn === 'sente' ? '先手' : '後手';
@@ -566,7 +565,7 @@ function executeMove(fromR, fromC, toR, toC) {
         if (target.owner === moving.owner) {
             if (target.types.length + moving.types.length > 4) {
                 alert("駒は最大4つまでしか重ねられません！");
-                historyStack.pop(); // エラー時は履歴を戻す
+                historyStack.pop();
                 return;
             }
             let targetNameBefore = getPieceNamesStr(target);
@@ -577,7 +576,6 @@ function executeMove(fromR, fromC, toR, toC) {
             addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し自分の [${targetNameBefore}] と合体 (${targetNameAfter})`);
         } else {
             if (target.types.some(t => t.type === 8)) {
-                // 王を捕らえた側の勝ち（turnが勝者）
                 let winnerStr = (turn === 'sente') ? '先手' : '後手';
                 addGameLog(`${winnerStr}: 王を捕獲！`);
                 playPachiSound();
@@ -598,41 +596,60 @@ function executeMove(fromR, fromC, toR, toC) {
             let targetNameCaptured = getPieceNamesStr(target);
             board[toR][toC] = moving;
             board[fromR][fromC] = null;
-            checkPromotion(board[toR][toC], fromR, toR, turn);
+            await checkPromotion(board[toR][toC], fromR, toR, turn);
 
             addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し、相手の [${targetNameCaptured}] を取る`);
         }
     } else {
         board[toR][toC] = moving;
         board[fromR][fromC] = null;
-        checkPromotion(board[toR][toC], fromR, toR, turn);
+        await checkPromotion(board[toR][toC], fromR, toR, turn);
         addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動`);
     }
     playPachiSound();
 }
 
-function checkPromotion(pieceObj, fromR, toR, playerTurn) {
+// カスタム成り確認モーダルをPromiseで待機させる関数
+function promptPromote(pieceName) {
+    return new Promise((resolve) => {
+        promoteResolver = resolve;
+        document.getElementById('promote-modal-title').textContent = `${pieceName} を 成りますか？`;
+        document.getElementById('promote-modal').style.display = 'flex';
+    });
+}
+
+function resolvePromote(choice) {
+    document.getElementById('promote-modal').style.display = 'none';
+    if (promoteResolver) {
+        let res = promoteResolver;
+        promoteResolver = null;
+        res(choice);
+    }
+}
+
+async function checkPromotion(pieceObj, fromR, toR, playerTurn) {
     let enemyZone = (playerTurn === 'sente') ? [0, 1, 2] : [6, 7, 8];
     let isEnemyArea = enemyZone.includes(fromR) || enemyZone.includes(toR);
     let playerStr = (playerTurn === 'sente') ? '先手' : '後手';
 
     if (isEnemyArea) {
-        pieceObj.types.forEach(p => {
+        for (let p of pieceObj.types) {
             if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
                 let pieceName = PIECE_DISPLAY_NAMES[p.type].name;
                 if (playerTurn === 'sente' || gameMode === 'pvp') {
-                    if (confirm(`${pieceName} を 成りますか？`)) {
+                    let willPromote = await promptPromote(pieceName);
+                    if (willPromote) {
                         p.isPromoted = true;
                         addGameLog(`${playerStr}: ${pieceName} を成りました`);
                     } else {
-                        addGameLog(`${playerStr}: ${pieceName} は成らず`);
+                        addGameLog(`${playerStr}: ${pieceName} はいいえ（成らず）`);
                     }
                 } else {
                     p.isPromoted = true;
                     addGameLog(`${playerStr}(CPU): ${pieceName} を成りました`);
                 }
             }
-        });
+        }
     }
 }
 
@@ -647,7 +664,7 @@ function switchTurn() {
     }
 }
 
-function runCpuTurn() {
+async function runCpuTurn() {
     if (isGameOver) return;
 
     let allMoves = [];
@@ -682,7 +699,7 @@ function runCpuTurn() {
         return;
     }
 
-    saveHistory(); // CPUの手の前に履歴保存
+    saveHistory();
 
     let bestMove;
 
@@ -816,14 +833,14 @@ function runCpuTurn() {
     }
 
     if (bestMove.type === 'board') {
-        executeMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
+        await executeMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
     } else if (bestMove.type === 'drop') {
         hands['gote'].splice(bestMove.handIndex, 1);
         board[bestMove.toR][bestMove.toC] = createPieceObj([bestMove.pieceType], 'gote');
         lastMove = { from: null, to: { r: bestMove.toR, c: bestMove.toC } };
         let pName = PIECE_DISPLAY_NAMES[bestMove.pieceType].name;
         let posStr = `${9 - bestMove.toC}${ROW_NAMES[bestMove.toR]}`;
-        addGameLog(`後手(CPU): ${pName}を ${posStr} に打つ`);
+        addGameLog(`後手(CPU): ${pName}를 ${posStr} に打つ`);
         playPachiSound();
     }
 
