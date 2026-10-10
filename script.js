@@ -269,6 +269,9 @@ function render() {
                 const pDiv = document.createElement('div');
                 pDiv.className = `piece ${piece.owner} ${piece.types.length > 1 ? 'merged' : ''}`;
                 
+                const innerDiv = document.createElement('div');
+                innerDiv.className = 'piece-content-inner';
+
                 if (piece.types.length > 1) {
                     const gridDiv = document.createElement('div');
                     gridDiv.className = 'piece-grid';
@@ -278,14 +281,15 @@ function render() {
                         sub.textContent = p.isPromoted ? PIECE_DISPLAY_NAMES[p.type].promoted : PIECE_DISPLAY_NAMES[p.type].name;
                         gridDiv.appendChild(sub);
                     });
-                    pDiv.appendChild(gridDiv);
+                    innerDiv.appendChild(gridDiv);
                 } else {
                     const p = piece.types[0];
                     const sub = document.createElement('span');
                     sub.className = `sub-piece single-piece-text ${p.isPromoted ? 'promoted' : ''}`;
                     sub.textContent = p.isPromoted ? PIECE_DISPLAY_NAMES[p.type].promoted : PIECE_DISPLAY_NAMES[p.type].name;
-                    pDiv.appendChild(sub);
+                    innerDiv.appendChild(sub);
                 }
+                pDiv.appendChild(innerDiv);
                 cell.appendChild(pDiv);
             }
             cell.addEventListener('click', () => handleCellClick(r, c));
@@ -336,7 +340,6 @@ function updateHUD() {
 function handleCellClick(r, c) {
     if (gameMode === 'cpu' && turn === 'gote' && isCpuThinking) return;
 
-    // 持ち駒を盤面に打つ場合（成らないように修正）
     if (selectedHandIndex !== null && movableCoords.some(m => m.r === r && m.c === c)) {
         let pieceType = hands[turn][selectedHandIndex];
         if (pieceType === 1 && hasNifu(c, turn)) {
@@ -345,7 +348,7 @@ function handleCellClick(r, c) {
         }
 
         hands[turn].splice(selectedHandIndex, 1);
-        board[r][c] = createPieceObj([pieceType], turn); // 打った時は成らない（表）
+        board[r][c] = createPieceObj([pieceType], turn);
         playPachiSound();
         resetSelection();
         switchTurn();
@@ -401,6 +404,8 @@ function executeMove(fromR, fromC, toR, toC) {
                 return;
             }
             target.types.push(...moving.types);
+            // 合体した側の所有者（色・向き）に統一する
+            target.owner = moving.owner;
             board[fromR][fromC] = null;
         } else {
             if (target.types.some(t => t.type === 8)) {
@@ -446,7 +451,6 @@ function checkPromotion(pieceObj, fromR, toR, playerTurn) {
                 }
             });
         } else {
-            // CPUの自動成り
             pieceObj.types.forEach(p => {
                 if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
                     p.isPromoted = true;
@@ -518,7 +522,7 @@ function runCpuTurn() {
                 board[move.toR][move.toC] = movingPiece;
             } else if (move.type === 'drop') {
                 capturedPiece = board[move.toR][move.toC];
-                board[move.toR][move.toC] = createPieceObj([move.pieceType], 'gote'); // 仮想配置
+                board[move.toR][move.toC] = createPieceObj([move.pieceType], 'gote');
             }
 
             let newGoteKing = findKingCoord('gote');
@@ -586,7 +590,7 @@ function runCpuTurn() {
         executeMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
     } else if (bestMove.type === 'drop') {
         hands['gote'].splice(bestMove.handIndex, 1);
-        board[bestMove.toR][bestMove.toC] = createPieceObj([bestMove.pieceType], 'gote'); // 持ち駒打ちは成らない
+        board[bestMove.toR][bestMove.toC] = createPieceObj([bestMove.pieceType], 'gote');
         playPachiSound();
     }
 
