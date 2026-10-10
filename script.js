@@ -89,8 +89,15 @@ function getMovableCoords(r, c, pieceObj) {
     return moves.filter(m => {
         let target = board[m.r][m.c];
         if (target && target.owner === pieceObj.owner) {
+            // 王の合体禁止
             if (pieceObj.types.some(t => t.type === 8) || target.types.some(t => t.type === 8)) return false;
+            // 2個上限
             if (target.types.length >= 2) return false;
+            
+            // 自分の「歩」とは合体できないルール
+            let movingHasFu = pieceObj.types.some(t => t.type === 1);
+            let targetHasFu = target.types.some(t => t.type === 1);
+            if (movingHasFu || targetHasFu) return false;
         }
         return true;
     });
