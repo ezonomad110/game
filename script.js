@@ -34,13 +34,35 @@ const PIECE_TYPES = {
     8: { name: '王', promoted: null }
 };
 
+const PIECE_VALUES = {
+    1: 1, 2: 3, 3: 3, 4: 4, 5: 5, 6: 8, 7: 10, 8: 1000
+};
+
 let board = Array(9).fill(null).map(() => Array(9).fill(null));
 let hands = { sente: [], gote: [] };
 
 let turn = 'sente';
+let gameMode = 'cpu'; // 初期値: vs CPU ('cpu' または 'pvp')
 let selectedCoord = null;
 let selectedHandIndex = null;
 let movableCoords = [];
+let isCpuThinking = false;
+
+function toggleGameMode() {
+    gameMode = (gameMode === 'cpu') ? 'pvp' : 'cpu';
+    const btn = document.getElementById('mode-toggle-btn');
+    const goteName = document.getElementById('gote-name');
+    
+    if (gameMode === 'cpu') {
+        btn.textContent = 'vs CPU';
+        goteName.textContent = '後手 (CPU)';
+    } else {
+        btn.textContent = '対人戦';
+        goteName.textContent = '後手 (プレイヤー)';
+    }
+    initBoard();
+    render();
+}
 
 function initBoard() {
     board = Array(9).fill(null).map(() => Array(9).fill(null));
@@ -57,6 +79,9 @@ function initBoard() {
     board[7][1] = createPieceObj([6], 'sente');
     board[7][7] = createPieceObj([7], 'sente');
     for (let c = 0; c < 9; c++) board[8][c] = createPieceObj([setupLine[c]], 'sente');
+
+    turn = 'sente';
+    resetSelection();
 }
 
 function createPieceObj(types, owner) {
@@ -229,7 +254,9 @@ function renderHands() {
             hp.textContent = PIECE_TYPES[typeId].name;
             hp.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (turn === player) handleHandClick(index);
+                if (turn === player && !(gameMode === 'cpu' && player === 'gote' && isCpuThinking)) {
+                    handleHandClick(index);
+                }
             });
             handDiv.appendChild(hp);
         });
@@ -253,6 +280,8 @@ function updateHUD() {
 }
 
 function handleCellClick(r, c) {
+    if (gameMode === 'cpu' && turn === 'gote' && isCpuThinking) return;
+
     if (selectedHandIndex !== null && movableCoords.some(m => m.r === r && m.c === c)) {
         let pieceType = hands[turn][selectedHandIndex];
         if (pieceType === 1 && hasNifu(c, turn)) {
@@ -325,7 +354,6 @@ function executeMove(fromR, fromC, toR, toC) {
                 setTimeout(() => {
                     alert(`${turn === 'sente' ? '先手' : '後手'}の勝利です！（王将を捕らえました）`);
                     initBoard();
-                    turn = 'sente';
                     render();
                 }, 100);
                 return;
@@ -338,33 +366,120 @@ function executeMove(fromR, fromC, toR, toC) {
             });
             board[toR][toC] = moving;
             board[fromR][fromC] = null;
-            checkPromotion(board[toR][toC], fromR, toR);
+            checkPromotion(board[toR][toC], fromR, toR, turn);
         }
     } else {
         board[toR][toC] = moving;
         board[fromR][fromC] = null;
-        checkPromotion(board[toR][toC], fromR, toR);
+        checkPromotion(board[toR][toC], fromR, toR, turn);
     }
     playPachiSound();
 }
 
-function checkPromotion(pieceObj, fromR, toR) {
-    let enemyZone = (pieceObj.owner === 'sente') ? [0, 1, 2] : [6, 7, 8];
+function checkPromotion(pieceObj, fromR, toR, playerTurn) {
+    let enemyZone = (playerTurn === 'sente') ? [0, 1, 2] : [6, 7, 8];
     let isEnemyArea = enemyZone.includes(fromR) || enemyZone.includes(toR);
 
     if (isEnemyArea) {
-        pieceObj.types.forEach(p => {
-            if (!p.isPromoted && PIECE_TYPES[p.type].promoted) {
-                if (confirm(`${PIECE_TYPES[p.type].name} を 成りますか？`)) {
+        if (playerTurn === 'sente' || gameMode === 'pvp') {
+            pieceObj.types.forEach(p => {
+                if (!p.isPromoted && PIECE_TYPES[p.type].promoted) {
+                    if (confirm(`${PIECE_TYPES[p.type].name} を 成りますか？`)) {
+                        p.isPromoted = true;
+                    }
+                }
+            });
+        } else {
+            // CPU（後手）の場合は自動で成れるものを成る
+            pieceObj.types.forEach(p => {
+                if (!p.isPromoted && PIECE_TYPES[p.type].promoted) {
                     p.isPromoted = true;
                 }
-            }
-        });
+            });
+        }
     }
 }
 
 function switchTurn() {
     turn = (turn === 'sente') ? 'gote' : 'sente';
+    render();
+
+    if (gameMode === 'cpu' && turn === 'gote') {
+        isCpuThinking = true;
+        setTimeout(runCpuTurn, 700);
+    }
+}
+
+// ==========================
+// 🤖 CPU思考ルーチン
+// ==========================
+function runCpuTurn() {
+    let allMoves = [];
+
+    // 1. 盤上の駒の移動手を収集
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            let p = board[r][c];
+            if (p && p.owner === 'gote') {
+                let moves = getMovableCoords(r, c, p);
+                moves.forEach(m => {
+                    allMoves.push({ type: 'board', fromR: r, fromC: c, toR: m.r, toC: m.c });
+                });
+            }
+        }
+    }
+
+    // 2. 持ち駒を打つ手を収集
+    hands['gote'].forEach((pieceType, hIndex) => {
+        let dropCoords = getDropCoords(pieceType);
+        dropCoords.forEach(d => {
+            allMoves.push({ type: 'drop', handIndex: hIndex, pieceType: pieceType, toR: d.r, toC: d.c });
+        });
+    });
+
+    if (allMoves.length === 0) {
+        alert("後手（CPU）の指せる手がありません。先手の勝利です！");
+        isCpuThinking = false;
+        return;
+    }
+
+    // 3. 評価値による手選び（王手・敵駒捕獲・合体を優先）
+    let scoredMoves = allMoves.map(move => {
+        let score = Math.random() * 2; // ランダム性（同点時の揺らぎ）
+        if (move.type === 'board') {
+            let target = board[move.toR][move.toC];
+            if (target) {
+                if (target.owner === 'sente') {
+                    if (target.types.some(t => t.type === 8)) score += 10000; // 王を捕まえる
+                    else score += target.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0) * 10;
+                } else if (target.owner === 'gote') {
+                    // 合体ボーナス
+                    score += 15;
+                }
+            }
+            // 敵陣へ近づく手は評価アップ
+            score += move.toR;
+        } else if (move.type === 'drop') {
+            score += PIECE_VALUES[move.pieceType] * 2;
+        }
+        return { move, score };
+    });
+
+    scoredMoves.sort((a, b) => b.score - a.score);
+    let bestMove = scoredMoves[0].move;
+
+    // 4. 手の実行
+    if (bestMove.type === 'board') {
+        executeMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
+    } else if (bestMove.type === 'drop') {
+        hands['gote'].splice(bestMove.handIndex, 1);
+        board[bestMove.toR][bestMove.toC] = createPieceObj([bestMove.pieceType], 'gote');
+        checkPromotion(board[bestMove.toR][bestMove.toC], bestMove.toR, bestMove.toR, 'gote');
+        playPachiSound();
+    }
+
+    isCpuThinking = false;
+    turn = 'sente';
     render();
 }
 
