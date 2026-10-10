@@ -66,12 +66,10 @@ function createPieceObj(types, owner) {
     };
 }
 
-// 二歩のチェック（同じ筋に自分の「歩」がすでに存在するか）
 function hasNifu(col, owner) {
     for (let r = 0; r < 9; r++) {
         let p = board[r][col];
         if (p && p.owner === owner) {
-            // 未成りの歩が含まれているか
             if (p.types.some(t => t.type === 1 && !t.isPromoted)) {
                 return true;
             }
@@ -165,9 +163,7 @@ function getDropCoords(pieceType) {
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
             if (!board[r][c]) {
-                // 歩の場合の二歩チェック
                 if (pieceType === 1 && hasNifu(c, turn)) continue;
-                // 歩の打ち歩詰めや行き所のない場所の簡易除外（ここでは基本の空きマス＋二歩チェック）
                 moves.push({r, c});
             }
         }
@@ -189,7 +185,6 @@ function render() {
             const piece = board[r][c];
             if (piece) {
                 const pDiv = document.createElement('div');
-                // 合体している場合は 'merged' クラスを付与して★アイコンを表示
                 pDiv.className = `piece ${piece.owner} ${piece.types.length > 1 ? 'merged' : ''}`;
                 piece.types.forEach(p => {
                     const sub = document.createElement('span');
@@ -254,7 +249,6 @@ function checkCheckStatus() {
 function handleCellClick(r, c) {
     if (selectedHandIndex !== null && movableCoords.some(m => m.r === r && m.c === c)) {
         let pieceType = hands[turn][selectedHandIndex];
-        // 二歩の再確認
         if (pieceType === 1 && hasNifu(c, turn)) {
             alert("同じ筋に歩を2枚打つ「二歩」は禁止されています！");
             return;
@@ -315,7 +309,6 @@ function executeMove(fromR, fromC, toR, toC) {
             target.types.push(...moving.types);
             board[fromR][fromC] = null;
         } else {
-            // 王を取った場合の勝敗判定
             if (target.types.some(t => t.type === 8)) {
                 playPachiSound();
                 render();
