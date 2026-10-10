@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.51';
+const SCRIPT_VERSION = 'v3.52';
 
 let audioCtx = null;
 
@@ -53,7 +53,7 @@ function getPieceTotalValue(pieceObj) {
         baseSum += val;
     });
     if (pieceObj.types.length > 1) {
-        baseSum *= 1.3; 
+        baseSum *= 1.4; // 合体駒の価値をさらに高く見積もる
     }
     return baseSum;
 }
@@ -296,7 +296,7 @@ function addStep(moves, r, c) {
 function addRay(moves, owner, r, c, dr, dc) {
     let nr = r + dr, nc = c + dc;
     while (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
-        moves.push({r: nr, c: nc});
+        moves.push({r: nr, nc: nc});
         if (board[nr][nc]) break;
         nr += dr; nc += dc;
     }
@@ -636,7 +636,6 @@ async function runCpuTurn() {
         let goteKing = findKingCoord('gote');
         let isKingInCheck = goteKing ? isSquareUnderAttack(goteKing.r, goteKing.c, 'sente') : false;
 
-        // 【新機能】先手が自陣1-3列目(行0〜2)および行3に侵入しているかの警戒フラグ
         let senteInGoteTerritory = false;
         for (let r = 0; r <= 3; r++) {
             for (let c = 0; c < 9; c++) {
@@ -646,7 +645,7 @@ async function runCpuTurn() {
         }
 
         let scoredMoves = allMoves.map(move => {
-            let score = Math.random() * (cpuLevel === 3 ? 0.3 : 1.5);
+            let score = Math.random() * (cpuLevel === 3 ? 0.2 : 1.0);
             let movingPiece = null;
             let targetPiece = null;
 
@@ -670,41 +669,36 @@ async function runCpuTurn() {
 
             let newGoteKing = findKingCoord('gote');
             let willBeInCheck = newGoteKing ? isSquareUnderAttack(newGoteKing.r, newGoteKing.c, 'sente') : false;
-            if (willBeInCheck) score -= 100000;
-            else if (isKingInCheck) score += 30000;
+            if (willBeInCheck) score -= 150000;
+            else if (isKingInCheck) score += 40000;
 
-            // 1. 【要件】王が不用意に1-3列目を出て前線に出ない
+            // 1. 王が不用意に前に出ない
             if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
-                if (move.toR >= 3) score -= (move.toR - 2) * 5000;
+                if (move.toR >= 3) score -= (move.toR - 2) * 8000;
             }
 
-            // 2. 【要件】自陣（行0〜2）への侵入に対して警戒を強める
-            if (senteInGoteTerritory) {
-                // 自陣防衛のために移動する手を高く評価
-                if (move.toR <= 3) {
-                    score += 400;
-                    if (targetPiece && targetPiece.owner === 'sente') {
-                        score += getPieceTotalValue(targetPiece) * 300; // 侵入してきた敵駒の迎撃
-                    }
+            // 2. 自陣（行0〜2）への侵入警戒
+            if (senteInGoteTerritory && move.toR <= 3) {
+                score += 500;
+                if (targetPiece && targetPiece.owner === 'sente') {
+                    score += getPieceTotalValue(targetPiece) * 400;
                 }
             }
 
-            // 3. 【要件】複数駒で攻め/守りを構成（味方の利きがあるマス＝連結の手を高評価）
+            // 3. 複数駒の連携（紐付き）
             let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
-            if (isProtectedByGote) {
-                score += 250; // 紐（味方のサポート）がついている強固な配置
-            }
+            if (isProtectedByGote) score += 300;
 
-            // 4. 【要件】不要に駒を取らせない（コマ損・タダ捨てを極限排除）
+            // 4. 【最重要強化】強駒（合体駒や大駒）のタダ捨て・安易なロストを絶対阻止
             let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
-            if (isUnderSenteAttack && !isProtectedByGote) {
-                let pieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
-                score -= pieceVal * 1000; // サポートのない場所への安易な飛び込みを完全拒否
-            } else if (isUnderSenteAttack && targetPiece && targetPiece.owner === 'sente') {
-                let myPieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
-                let capturedVal = getPieceTotalValue(targetPiece);
-                if (myPieceVal > capturedVal) {
-                    score -= (myPieceVal - capturedVal) * 500; // 不利な駒交換を排除
+            if (isUnderSenteAttack) {
+                let movingVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
+                if (!isProtectedByGote) {
+                    // 守りがないマスへの侵入や放置は、駒の価値に比例して超絶大ペナルティ
+                    score -= movingVal * 3000; 
+                } else {
+                    // 守りがあっても、相手の安駒（歩など）に高価値な合体駒を取られるような不利トレードは徹底拒否
+                    score -= movingVal * 1500;
                 }
             }
 
