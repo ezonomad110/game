@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.30';
+const SCRIPT_VERSION = 'v3.31';
 
 let audioCtx = null;
 
