@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>合体将棋 (Gattai Shogi)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: manipulation;
+        }
+        h1 {
+            font-size: 1.2rem;
+            margin: 5px 0 10px 0;
+            color: #333;
+        }
+        #status {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        #board-container {
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1 / 1;
+            background-color: #dcb35c;
+            border: 3px solid #8b5a2b;
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .cell {
+            border: 1px solid #b5883e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+        .cell.selected {
+            background-color: rgba(255, 255, 0, 0.5);
+        }
+        .cell.movable {
+            background-color: rgba(0, 255, 0, 0.3);
+        }
+        .piece {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 1px;
+            box-sizing: border-box;
+        }
+        .piece.sente {
+            color: #000;
+        }
+        .piece.gote {
+            color: #000;
+            transform: rotate(180deg);
+        }
+        .sub-piece {
+            font-size: 0.6rem;
+            line-height: 1;
+            padding: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>合体将棋</h1>
+    <div id="status">先手の番です</div>
+    <div id="board-container"></div>
+
+    <script>
+        // 駒の定義
+        // 0: 空, 1: 歩, 2: 香, 3: 桂, 4: 銀, 5: 金, 6: 角, 7: 飛, 8: 王/玉
+        const PIECES = {
+            1: { name: '歩', owner: null },
+            2: { name: '香', owner: null },
+            3: { name: '桂', owner: null },
+            4: { name: '銀', owner: null },
+            5: { name: '金', owner: null },
+            6: { name: '角', owner: null },
+            7: { name: '飛', owner: null },
+            8: { name: '王', owner: null }
+        };
+
+        // 初期盤面 (9x9)
+        // 形式: [ 駒IDの配列 (最大2つ), 持ち主 ('sente' or 'gote') ]
+        let board = Array(9).fill(null).map(() => Array(9).fill(null));
+
+        let turn = 'sente'; // 'sente' or 'gote'
+        let selectedCoord = null; // {r, c}
+        let movableCoords = [];
+
+        function initBoard() {
+            // 初期配置のセットアップ（簡略化のため主要な駒を配置）
+            // 後手 (上側 r=0, 1)
+            board[0][4] = { types: [8], owner: 'gote' }; // 王
+            board[0][3] = { types: [5], owner: 'gote' }; // 金
+            board[0][5] = { types: [5], owner: 'gote' }; // 金
+            board[1][1] = { types: [7], owner: 'gote' }; // 飛
+            board[1][7] = { types: [6], owner: 'gote' }; // 角
+            for(let c=0; c<9; c++) board[2][c] = { types: [1], owner: 'gote' }; // 歩
+
+            // 先手 (下側 r=8, 7)
+            board[8][4] = { types: [8], owner: 'sente' }; // 玉
+            board[8][3] = { types: [5], owner: 'sente' }; // 金
+            board[8][5] = { types: [5], owner: 'sente' }; // 金
+            board[7][1] = { types: [6], owner: 'sente' }; // 角
+            board[7][7] = { types: [7], owner: 'sente' }; // 飛
+            for(let c=0; c<9; c++) board[6][c] = { types: [1], owner: 'sente' }; // 歩
+        }
+
+        // 簡易移動判定（あとで詳細な将棋の動きに拡張します）
+        function getMovableCoords(r, c, pieceObj) {
+            let moves = [];
+            let owner = pieceObj.owner;
+            let types = pieceObj.types;
+
+            // 合体しているすべての駒の動きを統合（和集合）
+            types.forEach(type => {
+                let rawMoves = getRawMoves(type, owner, r, c);
+                rawMoves.forEach(m => {
+                    if (!moves.some(existing => existing.r === m.r && existing.c === m.c)) {
+                        moves.push(m);
+                    }
+                });
+            });
+            return moves;
+        }
+
+        function getRawMoves(type, owner, r, c) {
+            let moves = [];
+            let dir = (owner === 'sente') ? -1 : 1; // 先手は上(-1)、後手は下(+1)
+
+            // 簡易的な動きのサンプル（歩、金、王、飛、角）
+            if (type === 1) { // 歩
+                moves.push({ r: r + dir, c: c });
+            } else if (type === 5 || type === 8) { // 金 or 王
+                let offsets = [
+                    {r: -1, c: -1}, {r: -1, c: 0}, {r: -1, c: 1},
+                    {r: 0, c: -1},                 {r: 0, c: 1},
+                    {r: 1, c: 0}
+                ];
+                if (type === 8) { // 王は全方向1マス
+                    offsets.push({r: 1, c: -1}, {r: 1, c: 1});
+                }
+                offsets.forEach(o => {
+                    let nr = r + (owner === 'sente' ? o.r : -o.r);
+                    let nc = c + o.c;
+                    moves.push({ r: nr, c: nc });
+                });
+            } else if (type === 7) { // 飛車 (縦横1マス移動に簡易化、後で無限遠に拡張)
+                [[-1,0],[1,0],[0,-1],[0,1]].forEach(o => {
+                    for(let i=1; i<=8; i++) {
+                        let nr = r + o[0]*i;
+                        let nc = c + o[1]*i;
+                        if(nr>=0 && nr<9 && nc>=0 && nc<9) moves.push({r: nr, c: nc});
+                    }
+                });
+            } else if (type === 6) { // 角 (斜め無限に簡易化)
+                [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(o => {
+                    for(let i=1; i<=8; i++) {
+                        let nr = r + o[0]*i;
+                        let nc = c + o[1]*i;
+                        if(nr>=0 && nr<9 && nc>=0 && nc<9) moves.push({r: nr, c: nc});
+                    }
+                });
+            }
+            // 盤面内フィルタ
+            return moves.filter(m => m.r >= 0 && m.r < 9 && m.c >= 0 && m.c < 9);
+        }
+
+        function render() {
+            const container = document.getElementById('board-container');
+            container.innerHTML = '';
+
+            for(let r=0; r<9; r++) {
+                for(let c=0; c<9; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+
+                    // 選択状態のハイライト
+                    if (selectedCoord && selectedCoord.r === r && selectedCoord.c === c) {
+                        cell.classList.add('selected');
+                    }
+                    // 移動可能マスのハイライト
+                    if (movableCoords.some(m => m.r === r && m.c === c)) {
+                        cell.classList.add('movable');
+                    }
+
+                    const piece = board[r][c];
+                    if (piece) {
+                        const pDiv = document.createElement('div');
+                        pDiv.className = `piece ${piece.owner}`;
+                        
+                        // 駒の文字を表示（合体の場合は複数表示）
+                        piece.types.forEach(t => {
+                            const sub = document.createElement('span');
+                            sub.className = 'sub-piece';
+                            sub.textContent = getPieceName(t);
+                            pDiv.appendChild(sub);
+                        });
+                        cell.appendChild(pDiv);
+                    }
+
+                    cell.addEventListener('click', () => handleCellClick(r, c));
+                    container.appendChild(cell);
+                }
+            }
+
+            document.getElementById('status').textContent = `${turn === 'sente' ? '先手' : '後手'}の番です`;
+        }
+
+        function getPieceName(type) {
+            const names = {1:'歩', 2:'香', 3:'桂', 4:'銀', 5:'金', 6:'角', 7:'飛', 8:'王'};
+            return names[type] || '';
+        }
+
+        function handleCellClick(r, c) {
+            const clickedPiece = board[r][c];
+
+            // 1. すでに自分の駒を選択中で、移動可能マスをタップした場合（移動・合体）
+            if (selectedCoord && movableCoords.some(m => m.r === r && m.c === c)) {
+                executeMove(selectedCoord.r, selectedCoord.c, r, c);
+                selectedCoord = null;
+                movableCoords = [];
+                render();
+                return;
+            }
+
+            // 2. 自分の駒をタップした場合（選択）
+            if (clickedPiece && clickedPiece.owner === turn) {
+                selectedCoord = {r, c};
+                movableCoords = getMovableCoords(r, c, clickedPiece);
+                render();
+                return;
+            }
+
+            // それ以外（何もない場所や相手の駒を直接タップなど）は選択解除
+            selectedCoord = null;
+            movableCoords = [];
+            render();
+        }
+
+        function executeMove(fromR, fromC, toR, toC) {
+            let movingPiece = board[fromR][fromC];
+            let targetPiece = board[toR][toC];
+
+            if (targetPiece) {
+                // 【合体のルール】
+                // 自分の駒同士の場合、かつ移動先が自分の駒、かつ王を含まない場合
+                if (targetPiece.owner === movingPiece.owner) {
+                    // 王は合体不可のルール適用
+                    if (movingPiece.types.includes(8) || targetPiece.types.includes(8)) {
+                        alert("王は合体できません！");
+                        return;
+                    }
+                    // 合体の上限（最大2つまで）
+                    if (targetPiece.types.length >= 2) {
+                        alert("これ以上重ねることはできません（上限2つ）！");
+                        return;
+                    }
+                    // 駒を合体させる（移動元の駒のタイプを移動先の駒に追加）
+                    targetPiece.types.push(...movingPiece.types);
+                    board[fromR][fromC] = null;
+                } else {
+                    // 相手の駒を取る場合
+                    // 仕様：「取られた場合は2つとも取られる」
+                    // 相手の持ち駒になる処理は次ステップで実装、今回は単純に置き換え
+                    board[toR][toC] = movingPiece;
+                    board[fromR][fromC] = null;
+                }
+            } else {
+                // 何もないマスへの移動
+                board[toR][toC] = movingPiece;
+                board[fromR][fromC] = null;
+            }
+
+            // ターン交代
+            turn = (turn === 'sente') ? 'gote' : 'sente';
+        }
+
+        // 初期化実行
+        initBoard();
+        render();
+    </script>
+</body>
+</html>
