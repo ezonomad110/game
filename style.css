@@ -1,8 +1,8 @@
 body {
-    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
-    background-color: #2b2b2b;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif;
+    background-color: #1e1e1e;
     margin: 0;
-    padding: 6px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -16,66 +16,96 @@ body {
     align-items: baseline;
     width: 100%;
     max-width: 440px;
-    padding: 0 4px;
+    padding: 0 4px 4px 4px;
 }
-h1 { font-size: 1.05rem; margin: 2px 0; color: #f3e5c8; letter-spacing: 1px; }
+h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
+.header-ruby { font-size: 0.75rem; font-weight: normal; color: #dcb35c; }
 .version-badge { font-size: 0.7rem; color: #ffadad; font-weight: bold; font-family: sans-serif; }
-#status { font-size: 0.9rem; margin-bottom: 4px; font-weight: bold; color: #ffadad; min-height: 1.3em; text-align: center; }
 
-/* 持ち駒エリア */
-.hand-container {
+/* プレイヤーHUD＆持ち駒トレイの洗練 */
+.player-hud {
     width: 100%;
     max-width: 440px;
-    min-height: 36px;
-    background: linear-gradient(135deg, #d2a679, #b58863);
+    display: flex;
+    flex-direction: column;
+    margin: 3px 0;
+}
+.hud-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #b0b0b0;
+    padding: 0 2px;
+    margin-bottom: 2px;
+    font-family: sans-serif;
+}
+.player-hud.active .turn-indicator {
+    color: #ffadad;
+    animation: pulse-turn 1.5s infinite;
+}
+.player-hud:not(.active) .turn-indicator {
+    opacity: 0;
+}
+@keyframes pulse-turn {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; text-shadow: 0 0 6px rgba(255,173,173,0.8); }
+    100% { opacity: 0.6; }
+}
+
+.hand-container {
+    width: 100%;
+    min-height: 38px;
+    background: linear-gradient(135deg, #3d2614, #2a180b);
     border: 2px solid #5c3a21;
-    border-radius: 4px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
-    padding: 3px 6px;
+    padding: 4px 6px;
     box-sizing: border-box;
-    margin-bottom: 4px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 2px 5px rgba(0,0,0,0.3);
 }
-.hand-label { font-size: 0.7rem; font-weight: bold; margin-right: 4px; color: #2c1d0c; font-family: sans-serif; }
-.hand-pieces-inner { display: flex; flex-wrap: wrap; gap: 3px; }
+.hand-pieces-inner { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; min-height: 26px; align-items: center; }
 .gote-pieces { transform: rotate(180deg); }
 
 .hand-piece {
-    padding: 2px 6px;
-    background: #fff8dc;
+    padding: 2px 7px;
+    background: linear-gradient(to bottom, #fffef0, #f2e2bc);
     border: 1px solid #8b5a2b;
-    border-radius: 2px;
+    border-radius: 3px;
     font-size: 0.75rem;
     font-weight: bold;
-    color: #000;
+    color: #111;
     cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
-.hand-piece.selected { background-color: #ffeb3b; border-color: #d32f2f; transform: scale(1.05); }
+.hand-piece.selected { background-color: #ffeb3b; border-color: #d32f2f; transform: scale(1.08); }
 
-/* 将棋盤の外枠（座標用） */
+/* 將棋盤外枠と美しい余白・座標バランス */
 .shogi-board-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
     background-color: #dcb35c;
-    border: 3px solid #5c3a21;
-    padding: 2px 18px 18px 2px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    border-radius: 2px;
+    border: 4px solid #482f18;
+    padding: 6px 20px 20px 6px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    border-radius: 4px;
     max-width: 440px;
     width: 100%;
     box-sizing: border-box;
+    margin: 4px 0;
 }
 .coords-top {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     width: 100%;
     text-align: center;
-    font-size: 0.7rem;
-    color: #5c3a21;
+    font-size: 0.75rem;
+    color: #3d2412;
     font-weight: bold;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
     font-family: sans-serif;
 }
 .board-with-side {
@@ -87,11 +117,12 @@ h1 { font-size: 1.05rem; margin: 2px 0; color: #f3e5c8; letter-spacing: 1px; }
     display: grid;
     grid-template-rows: repeat(9, 1fr);
     text-align: center;
-    font-size: 0.7rem;
-    color: #5c3a21;
+    font-size: 0.75rem;
+    color: #3d2412;
     font-weight: bold;
-    width: 16px;
-    margin-left: 2px;
+    width: 18px;
+    margin-left: 4px;
+    align-self: center;
 }
 
 #board-container {
@@ -101,7 +132,8 @@ h1 { font-size: 1.05rem; margin: 2px 0; color: #f3e5c8; letter-spacing: 1px; }
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     grid-template-rows: repeat(9, 1fr);
-    border: 2px solid #8b5a2b;
+    border: 2px solid #5c3a21;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
 }
 .cell {
     border: 1px solid #b5883e;
@@ -112,17 +144,19 @@ h1 { font-size: 1.05rem; margin: 2px 0; color: #f3e5c8; letter-spacing: 1px; }
     cursor: pointer;
     user-select: none;
 }
-.cell.selected { background-color: rgba(255, 235, 59, 0.6); }
+.cell.selected { background-color: rgba(255, 235, 59, 0.65); }
 .cell.movable { background-color: rgba(46, 204, 113, 0.35); }
 .cell.movable::after {
     content: '';
     position: absolute;
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     background-color: #27ae60;
     border-radius: 50%;
+    box-shadow: 0 0 4px #27ae60;
 }
 
+/* 駒のデザイン＆複数合体時の2x2グリッド調整 */
 .piece {
     width: 88%;
     height: 92%;
@@ -130,33 +164,43 @@ h1 { font-size: 1.05rem; margin: 2px 0; color: #f3e5c8; letter-spacing: 1px; }
     border-top: 1px solid #d4af37;
     clip-path: polygon(18% 0%, 82% 0%, 100% 100%, 0% 100%);
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.35);
     position: relative;
-    padding-top: 3px;
 }
 .piece.sente { color: #111; }
 .piece.gote { color: #111; transform: rotate(180deg); }
 
 .piece.merged {
     background: linear-gradient(to bottom, #fffbeb, #fae19c);
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.8);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.85);
 }
 .piece.merged::before {
     content: '★';
     position: absolute;
-    top: 2px;
+    top: 1px;
     right: calc(50% - 4px);
     font-size: 0.45rem;
     color: #d4af37;
+    z-index: 2;
+}
+
+/* 複数合体時のグリッドコンテナ */
+.piece-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    width: 80%;
+    height: 75%;
+    align-items: center;
+    justify-items: center;
+    padding-top: 4px;
 }
 
 .sub-piece {
     font-size: 0.65rem;
     font-weight: bold;
-    line-height: 1.05;
-    letter-spacing: -1px;
+    line-height: 1;
 }
 .promoted { color: #c0392b; }
