@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重棋 (Chogi) ルールブック</title>
+    <style>
+        body {
+            font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+            background-color: #2b2b2b;
+            color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #382c20;
+            border: 3px solid #dcb35c;
+            border-radius: 8px;
+            padding: 24px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        h1 { color: #f3e5c8; text-align: center; border-bottom: 2px solid #dcb35c; padding-bottom: 10px; margin-top: 0; }
+        h2 { color: #ffadad; font-size: 1.1rem; margin-top: 20px; border-left: 4px solid #ffadad; padding-left: 8px; }
+        p, li { font-size: 0.9rem; line-height: 1.6; color: #e0d8c8; }
+        ul { padding-left: 20px; }
+        .back-btn {
+            display: block;
+            width: 100%;
+            max-width: 200px;
+            margin: 30px auto 0 auto;
+            padding: 10px;
+            background: #dcb35c;
+            color: #2b2b2b;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+        .back-btn:hover { background: #f3e5c8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>重棋 (Chogi) ルールブック</h1>
+        
+        <h2>1. ゲームの概要</h2>
+        <p>重棋は、通常の将棋盤（9×9）をベースに、<strong>「駒の合体（スタッキング）」</strong>の要素を取り入れた新しいボードゲームです。自分の駒同士を重ねることで、動きや能力をパワーアップさせることができます。</p>
+
+        <h2>2. 基本ルールと合体システム</h2>
+        <ul>
+            <li><strong>スタッキング（合体）</strong>: 自分の駒を自分の駒に重ねると、1つのマスに複数の駒が合体します（ゴールドの豪華なデザインになります）。</li>
+            <li><strong>最大4段積みまで</strong>: 1つのマスに重ねられる駒は<strong>最大4つまで</strong>です。5個以上の合体や、5個以上になる移動はできません。</li>
+            <li><strong>歩の制限</strong>: 自分の「歩」同士を合体させることはできません。また、通常の将棋と同じく「二歩（同じ筋に歩が2枚）」も禁止されています。</li>
+            <li><strong>王との合体禁止</strong>: 王将（玉将）は他の駒と合体することができません。</li>
+        </ul>
+
+        <h2>3. 勝敗の条件</h2>
+        <p>相手の王将（玉将）を捕らえる（取る）ことで勝利となります。</p>
+
+        <a href="index.html" class="back-btn">ゲームに戻る</a>
+    </div>
+</body>
+</html>
