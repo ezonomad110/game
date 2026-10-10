@@ -1,305 +1,391 @@
 body {
-    font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
     background-color: #1e1e1e;
+    color: #f4f4f9;
     margin: 0;
-    padding: 8px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    touch-action: manipulation;
-    color: #f4f4f9;
+    user-select: none;
 }
 
 .header-area {
+    width: 100%;
+    max-width: 500px;
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    width: 100%;
-    max-width: 440px;
-    padding: 0 4px 4px 4px;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0 4px;
+    box-sizing: border-box;
 }
-h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
-.header-ruby { font-size: 0.75rem; font-weight: normal; color: #dcb35c; }
-.header-right { display: flex; align-items: center; gap: 6px; }
+
+h1 {
+    font-size: 1.3rem;
+    margin: 0;
+    color: #f3e5c8;
+}
+
+.header-ruby {
+    font-size: 0.7rem;
+    color: #b0a080;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
 .header-btn {
-    background: #5c3a21;
+    background: #4a3b2c;
     color: #f3e5c8;
     border: 1px solid #dcb35c;
+    padding: 4px 10px;
     border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 0.7rem;
-    font-weight: bold;
+    font-size: 0.8rem;
     cursor: pointer;
-    font-family: sans-serif;
-    position: relative;
-    z-index: 10;
 }
-.header-btn:active { background: #3d2614; }
 
-.version-badge { font-size: 0.7rem; color: #ffadad; font-weight: bold; font-family: sans-serif; }
+.header-btn:hover {
+    background: #5d4a38;
+}
 
-/* モーダル画面 */
+.version-badge {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+/* プレイヤーHUD */
+.player-hud {
+    width: 100%;
+    max-width: 500px;
+    background: #2d241c;
+    border: 2px solid #4a3b2c;
+    border-radius: 6px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.player-hud.active {
+    border-color: #dcb35c;
+    background: #382c20;
+    box-shadow: 0 0 8px rgba(220, 179, 92, 0.3);
+}
+
+.hud-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #f3e5c8;
+}
+
+.turn-indicator {
+    font-size: 0.7rem;
+    color: #dcb35c;
+    display: none;
+}
+
+.player-hud.active .turn-indicator {
+    display: inline;
+}
+
+/* 持ち駒エリア */
+.hand-container {
+    display: flex;
+    gap: 4px;
+    min-height: 32px;
+    align-items: center;
+    overflow-x: auto;
+    max-width: 320px;
+}
+
+.hand-pieces-inner {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.hand-piece {
+    background: #443528;
+    border: 1px solid #b89742;
+    color: #f3e5c8;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.hand-piece:hover {
+    background: #5a4736;
+}
+
+.hand-piece.selected {
+    background: #dcb35c;
+    color: #1e1e1e;
+    border-color: #fff;
+    transform: translateY(-2px);
+}
+
+/* 将棋盤ラッパー */
+.shogi-board-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #c39b67;
+    padding: 6px;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    border: 3px solid #8b5a2b;
+}
+
+.coords-top {
+    display: grid;
+    grid-template-columns: repeat(9, 36px);
+    text-align: center;
+    font-size: 0.75rem;
+    color: #3e2723;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.board-with-side {
+    display: flex;
+}
+
+.coords-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    font-size: 0.75rem;
+    color: #3e2723;
+    font-weight: bold;
+    margin-left: 4px;
+    width: 16px;
+    text-align: center;
+}
+
+#board-container {
+    display: grid;
+    grid-template-columns: repeat(9, 36px);
+    grid-template-rows: repeat(9, 36px);
+    background: #e4b97d;
+    border: 2px solid #5c3a21;
+}
+
+/* マス目 */
+.cell {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #b88650;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    position: relative;
+    cursor: pointer;
+}
+
+.cell.selected {
+    background-color: rgba(220, 179, 92, 0.4);
+}
+
+.cell.movable::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background-color: rgba(46, 204, 113, 0.8);
+    border-radius: 50%;
+    position: absolute;
+    box-shadow: 0 0 4px rgba(46, 204, 113, 1);
+}
+
+/* 駒の基本デザイン */
+.piece {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-weight: bold;
+    box-sizing: border-box;
+    position: relative;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+}
+
+/* ── 先手（自分）の駒：明るい木目・黄褐色系 ── */
+.piece.sente {
+    background: linear-gradient(135deg, #f7d794, #e7c16d);
+    color: #2b2b2b;
+    border: 1px solid #b89742;
+}
+
+/* ── 後手（CPU/相手）の駒：深みのある赤茶・銅褐色系でハッキリ区別 ── */
+.piece.gote {
+    background: linear-gradient(135deg, #d89a72, #b26841);
+    color: #fff9f0;
+    border: 1px solid #7d4223;
+}
+
+/* ── 合体（スタッキング）した駒：まばゆいゴールド ── */
+.piece.merged {
+    background: linear-gradient(135deg, #ffeaa7, #fdcb6e) !important;
+    border: 2px solid #d4ac0d !important;
+    color: #2d3436 !important;
+    box-shadow: 0 0 6px rgba(253, 203, 110, 0.7);
+}
+
+/* 単体駒のテキスト */
+.single-piece-text {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.sub-piece.promoted {
+    color: #c0392b;
+}
+
+.piece.gote .sub-piece.promoted {
+    color: #ffcccc;
+}
+
+.piece.merged .sub-piece.promoted {
+    color: #c0392b !important;
+}
+
+/* 4分割グリッド（合体時） */
+.piece-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    width: 100%;
+    height: 100%;
+    padding: 1px;
+    box-sizing: border-box;
+}
+
+.sub-piece {
+    font-size: 0.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* モーダル共通 */
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 9999;
+    justify-content: center;
+    z-index: 1000;
 }
+
 .modal-content {
     background: #382c20;
     border: 3px solid #dcb35c;
     border-radius: 8px;
     padding: 20px;
     width: 90%;
-    max-width: 320px;
+    max-width: 340px;
+    box-sizing: border-box;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    color: #f4f4f9;
     text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-    position: relative;
-    z-index: 10000;
 }
-.rule-modal-content {
-    max-width: 360px;
-    text-align: left;
-}
-.rule-body {
-    font-size: 0.8rem;
-    line-height: 1.5;
-    color: #e0d8c8;
-    max-height: 250px;
-    overflow-y: auto;
-    margin-bottom: 15px;
-    padding-right: 4px;
-}
-.rule-body ul { padding-left: 18px; margin: 4px 0; }
 
 .modal-content h2 {
     color: #f3e5c8;
-    font-size: 1.1rem;
     margin-top: 0;
-    margin-bottom: 12px;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #dcb35c;
+    padding-bottom: 8px;
 }
+
 .modal-buttons {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-top: 15px;
 }
+
 .mode-select-btn {
-    padding: 12px;
-    background: linear-gradient(to bottom, #fffef0, #f2e2bc);
-    border: 2px solid #8b5a2b;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    background: #dcb35c;
+    color: #2b2b2b;
+    border: none;
+    padding: 10px;
+    font-size: 0.95rem;
     font-weight: bold;
-    color: #2c1d0c;
+    border-radius: 4px;
     cursor: pointer;
-    touch-action: manipulation;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
-.mode-select-btn.cpu-btn {
-    background: linear-gradient(to bottom, #5c3a21, #3d2614);
+
+.mode-select-btn:hover {
+    background: #f3e5c8;
+}
+
+.cpu-btn {
+    background: #8b6b43;
     color: #f3e5c8;
-    border-color: #dcb35c;
-}
-.mode-select-btn.rule-open-btn {
-    background: #2b3e50;
-    color: #aed6f1;
-    border-color: #5499c7;
-}
-.mode-select-btn:active { transform: scale(0.98); background-color: #ffeb3b; }
-
-/* プレイヤーHUD＆持ち駒トレイ */
-.player-hud {
-    width: 100%;
-    max-width: 440px;
-    display: flex;
-    flex-direction: column;
-    margin: 3px 0;
-}
-.hud-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: #b0b0b0;
-    padding: 0 2px;
-    margin-bottom: 2px;
-    font-family: sans-serif;
-}
-.player-hud.active .turn-indicator {
-    color: #ffadad;
-    animation: pulse-turn 1.5s infinite;
-}
-.player-hud:not(.active) .turn-indicator {
-    opacity: 0;
-}
-@keyframes pulse-turn {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; text-shadow: 0 0 6px rgba(255,173,173,0.8); }
-    100% { opacity: 0.6; }
 }
 
-.hand-container {
-    width: 100%;
-    min-height: 38px;
-    background: linear-gradient(135deg, #3d2614, #2a180b);
-    border: 2px solid #5c3a21;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    padding: 4px 6px;
-    box-sizing: border-box;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 2px 5px rgba(0,0,0,0.3);
+.cpu-btn:hover {
+    background: #a38054;
 }
-.hand-pieces-inner { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; min-height: 26px; align-items: center; }
-.gote-pieces { transform: rotate(180deg); }
 
-.hand-piece {
-    padding: 2px 7px;
-    background: linear-gradient(to bottom, #fffef0, #f2e2bc);
-    border: 1px solid #8b5a2b;
-    border-radius: 3px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: #111;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+.rule-open-btn {
+    background: #4a3b2c;
+    color: #f3e5c8;
+    border: 1px solid #dcb35c;
 }
-.hand-piece.selected { background-color: #ffeb3b; border-color: #d32f2f; transform: scale(1.08); }
 
-/* 将棋盤外枠 */
-.shogi-board-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #dcb35c;
-    border: 4px solid #482f18;
-    padding: 6px 20px 20px 6px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-    border-radius: 4px;
-    max-width: 440px;
-    width: 100%;
-    box-sizing: border-box;
-    margin: 4px 0;
+.rule-open-btn:hover {
+    background: #5d4a38;
 }
-.coords-top {
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    width: 100%;
-    text-align: center;
-    font-size: 0.75rem;
-    color: #3d2412;
-    font-weight: bold;
+
+/* ルールモーダル用 */
+.rule-modal-content {
+    max-width: 420px;
+    text-align: left;
+}
+
+.rule-body {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #e0d8c8;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-bottom: 15px;
+}
+
+.rule-body ul {
+    padding-left: 18px;
+    margin: 6px 0;
+}
+
+.rule-body li {
     margin-bottom: 4px;
-    font-family: sans-serif;
 }
-.board-with-side {
-    display: flex;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-}
-
-.coords-right {
-    display: grid;
-    grid-template-rows: repeat(9, 1fr);
-    width: 20px;
-    margin-left: 4px;
-    box-sizing: border-box;
-}
-.coords-right span {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    color: #3d2412;
-    font-weight: bold;
-    line-height: 1;
-}
-
-#board-container {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #e6b87d, #d19a5b);
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    grid-template-rows: repeat(9, 1fr);
-    border: 2px solid #5c3a21;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
-}
-.cell {
-    border: 1px solid #b5883e;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    cursor: pointer;
-    user-select: none;
-}
-.cell.selected { background-color: rgba(255, 235, 59, 0.65); }
-.cell.movable { background-color: rgba(46, 204, 113, 0.35); }
-.cell.movable::after {
-    content: '';
-    position: absolute;
-    width: 7px;
-    height: 7px;
-    background-color: #27ae60;
-    border-radius: 50%;
-    box-shadow: 0 0 4px #27ae60;
-}
-
-.piece {
-    width: 88%;
-    height: 92%;
-    background: linear-gradient(to bottom, #fffef8, #f5e4bc);
-    border-top: 1px solid #d4af37;
-    clip-path: polygon(18% 0%, 82% 0%, 100% 100%, 0% 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.35);
-    position: relative;
-}
-.piece.sente { color: #111; }
-.piece.gote { color: #111; transform: rotate(180deg); }
-
-.piece.merged {
-    background: linear-gradient(to bottom, #fffbeb, #fae19c);
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.85);
-}
-.piece.merged::before {
-    content: '★';
-    position: absolute;
-    top: 2px;
-    right: 4px;
-    font-size: 0.45rem;
-    color: #d4af37;
-    z-index: 2;
-}
-
-.single-piece-text {
-    font-size: 1.05rem;
-    font-weight: bold;
-    line-height: 1;
-}
-
-.piece-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    grid-template-rows: repeat(2, 1fr) !important;
-    width: 85%;
-    height: 75%;
-    align-items: center;
-    justify-items: center;
-    padding-top: 4px;
-    box-sizing: border-box;
-}
-
-.sub-piece {
-    font-size: 0.65rem;
-    font-weight: bold;
-    line-height: 1;
-}
-.promoted { color: #c0392b; }
