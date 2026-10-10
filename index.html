@@ -14,7 +14,7 @@
         </div>
         <div class="header-right">
             <button class="header-btn" onclick="openModeModal()">モード設定</button>
-            <span id="version-badge" class="version-badge">[v3.26]</span>
+            <span id="version-badge" class="version-badge">[v3.27]</span>
         </div>
     </div>
 
@@ -53,6 +53,12 @@
         </div>
     </div>
 
+    <!-- 駒の動き・合体ログエリア -->
+    <div class="log-panel">
+        <div class="log-header">対局ログ (動き・合体履歴)</div>
+        <div id="game-log-container" class="log-container"></div>
+    </div>
+
     <!-- モード選択モーダル -->
     <div id="mode-modal" class="modal-overlay">
         <div class="modal-content">
@@ -82,7 +88,7 @@
                 <p><strong>【操作方法】</strong></p>
                 <ul>
                     <li>自分の駒をクリックすると移動可能なマスが緑のドットで表示されます。</li>
-                    <li>相手の駒があるマスに重なると、その駒と合体します（所有権や色は維持されます）。</li>
+                    <li>相手の駒があるマスに重なると、その駒と合体します。</li>
                 </ul>
             </div>
             <div class="modal-buttons">
