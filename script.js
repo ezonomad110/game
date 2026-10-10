@@ -2,7 +2,9 @@ let audioCtx = null;
 
 function playPachiSound() {
     try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
@@ -67,11 +69,7 @@ function closeRuleModal() {
 }
 
 function setGameMode(mode, level) {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    playPachiSound();
+    playPachiSound(); // ユーザーの操作による音声初期化を確実に行う
 
     gameMode = mode;
     cpuLevel = level;
