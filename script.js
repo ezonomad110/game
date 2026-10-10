@@ -1,3 +1,14 @@
+なるほど！ルールの前提条件を完全に勘違いしておりました。申し訳ありません！
+ゲームの根本ルールは、「相手の駒を取る・合体する」のではなく、「自分の駒同士でのみ合体できる」ということですね。
+確定した正解ルール
+ * 合体の条件：自分の所有する駒同士（moving.owner === target.owner）でのみ合体できる。
+ * 相手の駒がいるマス：通常の将棋と同様に相手の駒をキャプチャ（獲得）する（あるいは最大数を越える移動は不可）。
+ * 所有権の維持：自分の駒同士の合体なので、所有者（sente または gote）が途中で変わることは絶対にない。
+原因と修正点
+移動可能マスの計算（getMovableCoords）および移動実行処理（executeMove）において、相手の駒があるマスへ移動した際に「相手の駒と合体する」処理が入っていたことがすべての問題の原因でした。
+相手の駒がいるマスへ移動した場合は「合体」ではなく「相手の駒を取り、自分の駒をそこに置く（相手の駒を持ち駒にする）」、自分の駒がいるマスへ移動したときだけ「重ねて合体する（所有者はそのまま）」という処理に完全に修正しました。
+最新の script.js (v3.29) を作成しましたので、こちらに差し替えてお試しください！
+script.js (v3.29 - 自駒限定合体 ＆ 正確なキャプチャ処理修正版)
 let audioCtx = null;
 
 function playPachiSound() {
@@ -42,7 +53,6 @@ const PIECE_VALUES = {
     1: 1, 2: 3, 3: 3, 4: 4, 5: 5, 6: 9, 7: 12, 8: 1500
 };
 
-const COL_NAMES = [null, '1', '2', '3', '4', '5', '6', '7', '8', '9'].reverse(); // 9～1
 const ROW_NAMES = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
 
 let board = Array(9).fill(null).map(() => Array(9).fill(null));
@@ -60,13 +70,13 @@ let isCpuThinking = false;
 function updateVersionBadge() {
     const badge = document.getElementById('version-badge');
     if (badge) {
-        badge.textContent = '[v3.27]';
+        badge.textContent = '[v3.29]';
     }
 }
 
 function addGameLog(message) {
     gameLogs.unshift(message);
-    if (gameLogs.log > 30) gameLogs.pop();
+    if (gameLogs.length > 30) gameLogs.pop();
     renderLogs();
 }
 
@@ -175,13 +185,16 @@ function getMovableCoords(r, c, pieceObj) {
     });
     return moves.filter(m => {
         let target = board[m.r][m.c];
-        if (target && target.owner === pieceObj.owner) {
-            if (pieceObj.types.some(t => t.type === 8) || target.types.some(t => t.type === 8)) return false;
-            if (target.types.length + pieceObj.types.length > 4) return false;
-            
-            let movingHasFu = pieceObj.types.some(t => t.type === 1);
-            let targetHasFu = target.types.some(t => t.type === 1);
-            if (movingHasFu || targetHasFu) return false;
+        if (target) {
+            if (target.owner === pieceObj.owner) {
+                // 自分の駒と重なる（合体）場合
+                if (pieceObj.types.some(t => t.type === 8) || target.types.some(t => t.type === 8)) return false;
+                if (target.types.length + pieceObj.types.length > 4) return false;
+                
+                let movingHasFu = pieceObj.types.some(t => t.type === 1);
+                let targetHasFu = target.types.some(t => t.type === 1);
+                if (movingHasFu || targetHasFu) return false;
+            }
         }
         return true;
     });
@@ -448,6 +461,7 @@ function executeMove(fromR, fromC, toR, toC) {
 
     if (target) {
         if (target.owner === moving.owner) {
+            // ⭐️ 自分の駒同士のみ：合体（マージ）処理（所有者は当然変わらない）
             if (target.types.length + moving.types.length > 4) {
                 alert("駒は最大4つまでしか重ねられません！");
                 return;
@@ -457,10 +471,11 @@ function executeMove(fromR, fromC, toR, toC) {
             let targetNameAfter = getPieceNamesStr(target);
             board[fromR][fromC] = null;
             
-            addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し [${targetNameBefore}] と合体 (${targetNameAfter})`);
+            addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し自分の [${targetNameBefore}] と合体 (${targetNameAfter})`);
         } else {
+            // ⭐️ 相手の駒がある場合：合体ではなく「相手の駒を取る（キャプチャ）」処理
             if (target.types.some(t => t.type === 8)) {
-                addGameLog(`${playerStr}: 王をキャプチャ！`);
+                addGameLog(`${playerStr}: 王を捕獲！`);
                 playPachiSound();
                 render();
                 setTimeout(() => {
@@ -472,21 +487,21 @@ function executeMove(fromR, fromC, toR, toC) {
                 return;
             }
 
-            if (target.types.length + moving.types.length <= 4) {
-                let originalTargetOwner = target.owner;
-                let targetNameBefore = getPieceNamesStr(target);
-                target.types.push(...moving.types);
-                target.owner = originalTargetOwner;
-                let targetNameAfter = getPieceNamesStr(target);
-                board[fromR][fromC] = null;
+            // 相手の合体駒に含まれていた全ての単体駒を手駒に移動（表裏・成りを戻す）
+            target.types.forEach(p => {
+                hands[turn].push(p.type);
+            });
 
-                addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ攻め込み、相手の [${targetNameBefore}] と合体 (${targetNameAfter})`);
-            } else {
-                alert("駒は最大4つまでしか重ねられません！");
-                return;
-            }
+            let targetNameCaptured = getPieceNamesStr(target);
+            // 相手の駒を取って自分の駒をそのマスに設置
+            board[toR][toC] = moving;
+            board[fromR][fromC] = null;
+            checkPromotion(board[toR][toC], fromR, toR, turn);
+
+            addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し、相手の [${targetNameCaptured}] を取る`);
         }
     } else {
+        // 空きマスへの通常の移動
         board[toR][toC] = moving;
         board[fromR][fromC] = null;
         checkPromotion(board[toR][toC], fromR, toR, turn);
@@ -573,23 +588,27 @@ function runCpuTurn() {
 
             let movingPiece = null;
             let targetPiece = null;
-            let capturedPiece = null;
 
             if (move.type === 'board') {
                 movingPiece = board[move.fromR][move.fromC];
                 targetPiece = board[move.toR][move.toC];
                 
                 board[move.fromR][move.fromC] = null;
-                capturedPiece = targetPiece;
 
                 if (targetPiece) {
-                    let simulatedTypes = [...targetPiece.types, ...movingPiece.types];
-                    board[move.toR][move.toC] = { types: simulatedTypes, owner: targetPiece.owner };
+                    if (targetPiece.owner === 'gote') {
+                        // 自分の駒同士の合体シミュレーション
+                        let simulatedTypes = [...targetPiece.types, ...movingPiece.types];
+                        board[move.toR][move.toC] = { types: simulatedTypes, owner: 'gote' };
+                    } else {
+                        // 相手の駒を取るシミュレーション
+                        board[move.toR][move.toC] = movingPiece;
+                    }
                 } else {
                     board[move.toR][move.toC] = movingPiece;
                 }
             } else if (move.type === 'drop') {
-                capturedPiece = board[move.toR][move.toC];
+                targetPiece = board[move.toR][move.toC];
                 board[move.toR][move.toC] = createPieceObj([move.pieceType], 'gote');
             }
 
@@ -613,9 +632,13 @@ function runCpuTurn() {
 
             if (move.type === 'board') {
                 if (targetPiece) {
-                    let stackCountAfter = targetPiece.types.length + movingPiece.types.length;
-                    score += stackCountAfter * 25;
-                    score += 20;
+                    if (targetPiece.owner === 'sente') {
+                        // 相手の駒を取る手の評価を大幅アップ
+                        score += 500;
+                    } else {
+                        let stackCountAfter = targetPiece.types.length + movingPiece.types.length;
+                        score += stackCountAfter * 25;
+                    }
                 }
 
                 if (cpuLevel === 3) {
@@ -635,9 +658,9 @@ function runCpuTurn() {
 
             if (move.type === 'board') {
                 board[move.fromR][move.fromC] = movingPiece;
-                board[move.toR][move.toC] = capturedPiece;
+                board[move.toR][move.toC] = targetPiece;
             } else if (move.type === 'drop') {
-                board[move.toR][move.toC] = capturedPiece;
+                board[move.toR][move.toC] = targetPiece;
             }
 
             return { move, score };
@@ -665,3 +688,4 @@ function runCpuTurn() {
 
 initBoard();
 render();
+
