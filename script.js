@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.42';
+const SCRIPT_VERSION = 'v3.43';
 
 let audioCtx = null;
 
@@ -57,7 +57,6 @@ function getPieceTotalValue(pieceObj) {
         if (t.isPromoted) val += 2;
         baseSum += val;
     });
-    // 過剰な合体を抑制するため、スタックボーナスは控えめに調整
     if (pieceObj.types.length > 1) {
         baseSum *= 1.1; 
     }
@@ -287,7 +286,7 @@ function getDropCoords(pieceType, owner) {
             if (!board[r][c]) {
                 if (pieceType === 1) {
                     if (hasNifu(c, owner)) continue;
-                    if (r === lastRank) continue; // 行き所の無い歩の制限
+                    if (r === lastRank) continue;
                 }
                 moves.push({r, c});
             }
@@ -650,6 +649,15 @@ function runCpuTurn() {
                 score += 15000;
             }
 
+            // 【新機能】タダ捨て防止（相手の利きがあり、味方の守りがない危険なマスへの移動・打ち込みを大減点）
+            let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
+            let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
+            
+            if (isUnderSenteAttack && !isProtectedByGote) {
+                let pieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
+                score -= pieceVal * 300; // 価値に応じた強烈なペナルティでタダ捨てを回避
+            }
+
             if (newGoteKing) {
                 let sentePiecesThreatening = 0;
                 for (let r = 0; r < 9; r++) {
@@ -685,7 +693,7 @@ function runCpuTurn() {
                 } else if (targetPiece) {
                     if (targetPiece.owner === 'sente') {
                         let capturedVal = getPieceTotalValue(targetPiece);
-                        score += capturedVal * 120;
+                        score += capturedVal * 150; // 駒を取るメリットを強化
                     } else {
                         score += 10; 
                     }
@@ -694,8 +702,7 @@ function runCpuTurn() {
                 let isCheckingSente = senteKing ? getMovableCoords(move.toR, move.toC, board[move.toR][move.toC]).some(m => m.r === senteKing.r && m.c === senteKing.c) : false;
                 if (isCheckingSente) {
                     let movingVal = getPieceTotalValue(board[move.toR][move.toC]);
-                    let isUnderAttackBySente = isSquareUnderAttack(move.toR, move.toC, 'sente');
-                    if (movingVal <= 1 && isUnderAttackBySente) {
+                    if (movingVal <= 1 && isUnderSenteAttack) {
                         score -= 5000;
                     } else {
                         score += 4000;
