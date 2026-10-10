@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.38';
+const SCRIPT_VERSION = 'v3.40';
 
 let audioCtx = null;
 
@@ -34,14 +34,15 @@ function playPachiSound() {
     } catch (e) {}
 }
 
+// すべて元の駒の名前に統一（成った場合は赤字で区別）
 const PIECE_DISPLAY_NAMES = {
-    1: { name: '歩', promoted: 'と' },
-    2: { name: '香', promoted: '杏' },
-    3: { name: '桂', promoted: '圭' },
-    4: { name: '銀', promoted: '全' },
+    1: { name: '歩', promoted: '歩' },
+    2: { name: '香', promoted: '香' },
+    3: { name: '桂', promoted: '桂' },
+    4: { name: '銀', promoted: '銀' },
     5: { name: '金', promoted: null },
-    6: { name: '角', promoted: '馬' },
-    7: { name: '飛', promoted: '竜' },
+    6: { name: '角', promoted: '角' },
+    7: { name: '飛', promoted: '飛' },
     8: { name: '王', promoted: null }
 };
 
@@ -92,8 +93,7 @@ function renderLogs() {
 
 function getPieceNamesStr(pieceObj) {
     return pieceObj.types.map(t => {
-        let n = t.isPromoted ? PIECE_DISPLAY_NAMES[t.type].promoted : PIECE_DISPLAY_NAMES[t.type].name;
-        return n;
+        return PIECE_DISPLAY_NAMES[t.type].name;
     }).join('+');
 }
 
@@ -337,7 +337,7 @@ function render() {
                     piece.types.forEach(p => {
                         const sub = document.createElement('span');
                         sub.className = `sub-piece ${p.isPromoted ? 'promoted' : ''}`;
-                        sub.textContent = p.isPromoted ? PIECE_DISPLAY_NAMES[p.type].promoted : PIECE_DISPLAY_NAMES[p.type].name;
+                        sub.textContent = PIECE_DISPLAY_NAMES[p.type].name;
                         gridDiv.appendChild(sub);
                     });
                     innerDiv.appendChild(gridDiv);
@@ -345,7 +345,7 @@ function render() {
                     const p = piece.types[0];
                     const sub = document.createElement('span');
                     sub.className = `sub-piece single-piece-text ${p.isPromoted ? 'promoted' : ''}`;
-                    sub.textContent = p.isPromoted ? PIECE_DISPLAY_NAMES[p.type].promoted : PIECE_DISPLAY_NAMES[p.type].name;
+                    sub.textContent = PIECE_DISPLAY_NAMES[p.type].name;
                     innerDiv.appendChild(sub);
                 }
                 pDiv.appendChild(innerDiv);
