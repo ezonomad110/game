@@ -13,7 +13,6 @@ body {
 h1 { font-size: 1.1rem; margin: 4px 0; color: #e2d3b2; letter-spacing: 2px; }
 #status { font-size: 0.95rem; margin-bottom: 6px; font-weight: bold; color: #ffadad; min-height: 1.4em; text-align: center; }
 
-/* 持ち駒エリア（高級感のある木目プレート） */
 .hand-container {
     width: 100%;
     max-width: 440px;
@@ -38,7 +37,6 @@ h1 { font-size: 1.1rem; margin: 4px 0; color: #e2d3b2; letter-spacing: 2px; }
     transform: rotate(180deg);
 }
 
-/* 持ち駒の見た目も台形風に合わせる */
 .hand-piece {
     padding: 2px 8px;
     background: linear-gradient(to bottom, #fffdfa, #f3e5c8);
@@ -52,7 +50,6 @@ h1 { font-size: 1.1rem; margin: 4px 0; color: #e2d3b2; letter-spacing: 2px; }
 }
 .hand-piece.selected { background: #ffe600; border-color: #c0392b; transform: scale(1.08); }
 
-/* 将棋盤（本格的な木製盤面の質感） */
 #board-container {
     width: 100%;
     max-width: 440px;
@@ -87,7 +84,6 @@ h1 { font-size: 1.1rem; margin: 4px 0; color: #e2d3b2; letter-spacing: 2px; }
     box-shadow: 0 0 4px #27ae60;
 }
 
-/* 駒の形状：CSSの clip-path で本物の「台形（五角形）」を形成 */
 .piece {
     width: 88%;
     height: 90%;
@@ -100,14 +96,12 @@ h1 { font-size: 1.1rem; margin: 4px 0; color: #e2d3b2; letter-spacing: 2px; }
     align-items: center;
     box-shadow: 0 3px 5px rgba(0,0,0,0.3);
     position: relative;
-    padding-top: 4px; /* 台形の上部が狭いため少し下げる */
+    padding-top: 4px;
 }
 
-/* プレイヤー別の向き */
 .piece.sente { color: #111; }
 .piece.gote { color: #111; transform: rotate(180deg); }
 
-/* 合体駒の特別仕様（ゴールドの縁取り風グラデーション ＆ ★マーク） */
 .piece.merged {
     background: linear-gradient(to bottom, #fffbeb, #fae19c);
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
@@ -121,11 +115,10 @@ h1 { font-size: 1.1rem; margin: 4px 0; color: #e2d3b2; letter-spacing: 2px; }
     color: #d4af37;
 }
 
-/* 駒の文字 */
 .sub-piece {
     font-size: 0.65rem;
     font-weight: 900;
     line-height: 1.05;
     letter-spacing: -1px;
 }
-.promoted { color: #b91c1c; } /* 成り駒は鮮やかな赤 */
+.promoted { color: #b91c1c; }
