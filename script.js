@@ -3,7 +3,9 @@ let audioCtx = null;
 function playPachiSound() {
     try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
 
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -23,7 +25,7 @@ function playPachiSound() {
     } catch (e) {}
 }
 
-const PIECE_TYPES = {
+const PIECE_DISPLAY_NAMES = {
     1: { name: '歩', promoted: 'と' },
     2: { name: '香', promoted: '杏' },
     3: { name: '桂', promoted: '圭' },
@@ -35,15 +37,15 @@ const PIECE_TYPES = {
 };
 
 const PIECE_VALUES = {
-    1: 1, 2: 3, 3: 3, 4: 4, 5: 5, 6: 8, 7: 10, 8: 1000
+    1: 1, 2: 3, 3: 3, 4: 4, 5: 5, 6: 9, 7: 12, 8: 1500
 };
 
 let board = Array(9).fill(null).map(() => Array(9).fill(null));
 let hands = { sente: [], gote: [] };
 
 let turn = 'sente';
-let gameMode = 'cpu'; // 'cpu' または 'pvp'
-let cpuLevel = 2;    // 1: 初級, 2: 中級, 3: 上級
+let gameMode = 'cpu';
+let cpuLevel = 2; // デフォルト中級
 let selectedCoord = null;
 let selectedHandIndex = null;
 let movableCoords = [];
@@ -53,14 +55,36 @@ function openModeModal() {
     document.getElementById('mode-modal').style.display = 'flex';
 }
 
+function openRuleModal() {
+    document.getElementById('rule-modal').style.display = 'flex';
+}
+
+function openRuleModalFromModal() {
+    document.getElementById('mode-modal').style.display = 'none';
+    document.getElementById('rule-modal').style.display = 'flex';
+}
+
+function closeRuleModal() {
+    document.getElementById('rule-modal').style.display = 'none';
+    if (!board.some(row => row.some(cell => cell !== null))) {
+        openModeModal();
+    }
+}
+
 function setGameMode(mode, level) {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    playPachiSound();
+
     gameMode = mode;
     cpuLevel = level;
     document.getElementById('mode-modal').style.display = 'none';
 
     const goteName = document.getElementById('gote-name');
     if (gameMode === 'cpu') {
-        let lvlName = level === 1 ? '初級' : (level === 2 ? '中級' : '上級');
+        let lvlName = level === 1 ? '初級' : (level === 2 ? '中級' : '上級・強');
         goteName.textContent = `後手 (CPU:${lvlName})`;
     } else {
         goteName.textContent = '後手 (プレイヤー)';
@@ -165,7 +189,7 @@ function getRawMoves(type, isPromoted, owner, r, c) {
             if (isPromoted) [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(o => addStep(moves, r+o[0], c+o[1]));
             break;
         case 8:
-            [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(o => addStep(moves, r+o[0], c+o[1]));
+            [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1']].forEach(o => addStep(moves, r+o[0], c+o[1]));
             break;
     }
     return moves;
@@ -227,7 +251,7 @@ function render() {
                     piece.types.forEach(p => {
                         const sub = document.createElement('span');
                         sub.className = `sub-piece ${p.isPromoted ? 'promoted' : ''}`;
-                        sub.textContent = p.isPromoted ? PIECE_TYPES[p.type].promoted : PIECE_TYPES[p.type].name;
+                        sub.textContent = p.isPromoted ? PIECE_DISPLAY_NAMES[p.type].promoted : PIECE_DISPLAY_NAMES[p.type].name;
                         gridDiv.appendChild(sub);
                     });
                     pDiv.appendChild(gridDiv);
@@ -235,7 +259,7 @@ function render() {
                     const p = piece.types[0];
                     const sub = document.createElement('span');
                     sub.className = `sub-piece single-piece-text ${p.isPromoted ? 'promoted' : ''}`;
-                    sub.textContent = p.isPromoted ? PIECE_TYPES[p.type].promoted : PIECE_TYPES[p.type].name;
+                    sub.textContent = p.isPromoted ? PIECE_DISPLAY_NAMES[p.type].promoted : PIECE_DISPLAY_NAMES[p.type].name;
                     pDiv.appendChild(sub);
                 }
                 cell.appendChild(pDiv);
@@ -256,7 +280,7 @@ function renderHands() {
         hands[player].forEach((typeId, index) => {
             const hp = document.createElement('div');
             hp.className = `hand-piece ${selectedHandIndex === index && turn === player ? 'selected' : ''}`;
-            hp.textContent = PIECE_TYPES[typeId].name;
+            hp.textContent = PIECE_DISPLAY_NAMES[typeId].name;
             hp.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (turn === player && !(gameMode === 'cpu' && player === 'gote' && isCpuThinking)) {
@@ -359,6 +383,7 @@ function executeMove(fromR, fromC, toR, toC) {
                 setTimeout(() => {
                     alert(`${turn === 'sente' ? '先手' : '後手'}の勝利です！（王将を捕らえました）`);
                     initBoard();
+                    openModeModal();
                     render();
                 }, 100);
                 return;
@@ -388,15 +413,15 @@ function checkPromotion(pieceObj, fromR, toR, playerTurn) {
     if (isEnemyArea) {
         if (playerTurn === 'sente' || gameMode === 'pvp') {
             pieceObj.types.forEach(p => {
-                if (!p.isPromoted && PIECE_TYPES[p.type].promoted) {
-                    if (confirm(`${PIECE_TYPES[p.type].name} を 成りますか？`)) {
+                if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
+                    if (confirm(`${PIECE_DISPLAY_NAMES[p.type].name} を 成りますか？`)) {
                         p.isPromoted = true;
                     }
                 }
             });
         } else {
             pieceObj.types.forEach(p => {
-                if (!p.isPromoted && PIECE_TYPES[p.type].promoted) {
+                if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
                     p.isPromoted = true;
                 }
             });
@@ -410,13 +435,10 @@ function switchTurn() {
 
     if (gameMode === 'cpu' && turn === 'gote') {
         isCpuThinking = true;
-        setTimeout(runCpuTurn, 700);
+        setTimeout(runCpuTurn, 600);
     }
 }
 
-// ==========================
-// 🤖 レベル別 CPU思考ルーチン
-// ==========================
 function runCpuTurn() {
     let allMoves = [];
 
@@ -442,32 +464,50 @@ function runCpuTurn() {
     if (allMoves.length === 0) {
         alert("後手（CPU）の指せる手がありません。先手の勝利です！");
         isCpuThinking = false;
+        openModeModal();
         return;
     }
 
     let bestMove;
 
     if (cpuLevel === 1) {
-        // 初級：完全ランダム
         bestMove = allMoves[Math.floor(Math.random() * allMoves.length)];
     } else {
-        // 中級・上級：評価値による最善手選択
         let scoredMoves = allMoves.map(move => {
-            let score = Math.random() * (cpuLevel === 2 ? 5 : 1); // 上級はランダム要素少なめ
+            let score = Math.random() * (cpuLevel === 3 ? 1 : 4);
+
             if (move.type === 'board') {
+                let movingPiece = board[move.fromR][move.fromC];
                 let target = board[move.toR][move.toC];
+
                 if (target) {
                     if (target.owner === 'sente') {
-                        if (target.types.some(t => t.type === 8)) score += 20000;
-                        else score += target.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0) * 15;
+                        if (target.types.some(t => t.type === 8)) {
+                            score += 50000;
+                        } else {
+                            let targetVal = target.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0);
+                            let movingVal = movingPiece.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0);
+                            score += targetVal * 25;
+                            if (targetVal > movingVal) score += 50;
+                        }
                     } else if (target.owner === 'gote') {
-                        score += (cpuLevel === 3 ? 30 : 15); // 上級は合体を積極的に狙う
+                        let stackCountAfter = target.types.length + movingPiece.types.length;
+                        score += stackCountAfter * 20;
+                        score += 15;
                     }
                 }
-                score += move.toR * (cpuLevel === 3 ? 3 : 1); // 敵陣へ進むのを評価
+
+                if (cpuLevel === 3) {
+                    score += move.toR * 5;
+                } else {
+                    score += move.toR;
+                }
+
             } else if (move.type === 'drop') {
-                score += PIECE_VALUES[move.pieceType] * 3;
+                score += PIECE_VALUES[move.pieceType] * 8;
+                if (move.toR >= 5) score += 15;
             }
+
             return { move, score };
         });
 
@@ -489,10 +529,6 @@ function runCpuTurn() {
     render();
 }
 
-// 初回起動時はモード選択モーダルを表示しておく
 document.addEventListener("DOMContentLoaded", () => {
     openModeModal();
 });
-
-initBoard();
-render();
