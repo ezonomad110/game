@@ -1,4 +1,5 @@
-const SCRIPT_VERSION = 'v3.49';
+const SCRIPT_VERSION = 'v3.50';
+
 let audioCtx = null;
 
 function initAudio() {
@@ -51,8 +52,9 @@ function getPieceTotalValue(pieceObj) {
         if (t.isPromoted) val += 2;
         baseSum += val;
     });
+    // 合体している場合はシナジー効果として価値を少し高めに評価
     if (pieceObj.types.length > 1) {
-        baseSum *= 1.1; 
+        baseSum *= 1.25; 
     }
     return baseSum;
 }
@@ -635,7 +637,7 @@ async function runCpuTurn() {
         let goteKing = findKingCoord('gote');
         let isKingInCheck = goteKing ? isSquareUnderAttack(goteKing.r, goteKing.c, 'sente') : false;
         let scoredMoves = allMoves.map(move => {
-            let score = Math.random() * (cpuLevel === 3 ? 0.5 : 2);
+            let score = Math.random() * (cpuLevel === 3 ? 0.3 : 1.5);
             let movingPiece = null;
             let targetPiece = null;
             if (move.type === 'board') {
@@ -658,30 +660,29 @@ async function runCpuTurn() {
 
             let newGoteKing = findKingCoord('gote');
             let willBeInCheck = newGoteKing ? isSquareUnderAttack(newGoteKing.r, newGoteKing.c, 'sente') : false;
-            if (willBeInCheck) score -= 50000;
-            else if (isKingInCheck) score += 15000;
+            if (willBeInCheck) score -= 80000;
+            else if (isKingInCheck) score += 20000;
 
+            // 【強化】王が前線に出る行動へのペナルティをさらに厳しく
             if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
-                if (move.toR >= 3) score -= (move.toR - 2) * 1500;
+                if (move.toR >= 3) score -= (move.toR - 2) * 3000;
             }
 
-            if (move.type === 'board' && movingPiece) {
-                let isMajorPiece = movingPiece.types.some(t => t.type === 6 || t.type === 7);
-                if (isMajorPiece && !targetPiece) {
-                    let isCheckingSente = findKingCoord('sente') ? getMovableCoords(move.toR, move.toC, movingPiece).some(m => m.r === findKingCoord('sente').r && m.c === findKingCoord('sente').c) : false;
-                    if (!isCheckingSente && move.toR < 5) score -= 50;
-                }
+            // 【強化】合体駒で攻撃・前進する手を高評価
+            if (move.type === 'board' && movingPiece && movingPiece.types.length > 1) {
+                score += movingPiece.types.length * 150;
+                if (move.toR >= 5) score += 300; // 敵陣へ向かう合体駒びいき
             }
 
             let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
             let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
             if (isUnderSenteAttack && !isProtectedByGote) {
                 let pieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
-                score -= pieceVal * 400;
+                score -= pieceVal * 600; // タダ捨てを徹底拒否
             } else if (isUnderSenteAttack && targetPiece && targetPiece.owner === 'sente') {
                 let myPieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
                 let capturedVal = getPieceTotalValue(targetPiece);
-                if (myPieceVal > capturedVal) score -= (myPieceVal - capturedVal) * 200;
+                if (myPieceVal > capturedVal) score -= (myPieceVal - capturedVal) * 300;
             }
 
             if (move.type === 'board') {
