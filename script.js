@@ -92,8 +92,8 @@ function getMovableCoords(r, c, pieceObj) {
             // 王との合体禁止
             if (pieceObj.types.some(t => t.type === 8) || target.types.some(t => t.type === 8)) return false;
             
-            // 2枚超の合体禁止
-            if (target.types.length >= 2) return false;
+            // 【最大4つまで】合体後の合計枚数が4枚を超える移動は不可
+            if (target.types.length + pieceObj.types.length > 4) return false;
             
             // 自分の「歩」とは合体できないルール
             let movingHasFu = pieceObj.types.some(t => t.type === 1);
@@ -208,8 +208,7 @@ function render() {
                 } else {
                     const p = piece.types[0];
                     const sub = document.createElement('span');
-                    sub.className = `sub-piece ${p.isPromoted ? 'promoted' : ''}`;
-                    sub.style.fontSize = '1.05rem';
+                    sub.className = `sub-piece single-piece-text ${p.isPromoted ? 'promoted' : ''}`;
                     sub.textContent = p.isPromoted ? PIECE_TYPES[p.type].promoted : PIECE_TYPES[p.type].name;
                     pDiv.appendChild(sub);
                 }
@@ -322,7 +321,7 @@ function executeMove(fromR, fromC, toR, toC) {
         } else {
             if (target.types.some(t => t.type === 8)) {
                 playPachiSound();
-                render();
+5                render();
                 setTimeout(() => {
                     alert(`${turn === 'sente' ? '先手' : '後手'}の勝利です！（王将を捕らえました）`);
                     initBoard();
