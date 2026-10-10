@@ -404,8 +404,7 @@ function executeMove(fromR, fromC, toR, toC) {
                 return;
             }
             target.types.push(...moving.types);
-            // 合体した側の所有者（色・向き）に統一する
-            target.owner = moving.owner;
+            // 所有者は既存の所有者を維持する（勝手に上書きしない）
             board[fromR][fromC] = null;
         } else {
             if (target.types.some(t => t.type === 8)) {
@@ -420,6 +419,7 @@ function executeMove(fromR, fromC, toR, toC) {
                 return;
             }
 
+            // 相手の駒を取った場合：相手の持ち駒には入れず、自分の持ち駒にする（通常の将棋のルール）
             target.types.forEach(p => {
                 if (p.type !== 8) {
                     hands[turn].push(p.type);
@@ -517,9 +517,16 @@ function runCpuTurn() {
             if (move.type === 'board') {
                 movingPiece = board[move.fromR][move.fromC];
                 targetPiece = board[move.toR][move.toC];
+                
                 board[move.fromR][move.fromC] = null;
-                capturedPiece = board[move.toR][move.toC];
-                board[move.toR][move.toC] = movingPiece;
+                capturedPiece = targetPiece;
+
+                if (targetPiece && targetPiece.owner === movingPiece.owner) {
+                    let simulatedTypes = [...targetPiece.types, ...movingPiece.types];
+                    board[move.toR][move.toC] = { types: simulatedTypes, owner: targetPiece.owner };
+                } else {
+                    board[move.toR][move.toC] = movingPiece;
+                }
             } else if (move.type === 'drop') {
                 capturedPiece = board[move.toR][move.toC];
                 board[move.toR][move.toC] = createPieceObj([move.pieceType], 'gote');
@@ -599,6 +606,5 @@ function runCpuTurn() {
     render();
 }
 
-// 初期化
 initBoard();
 render();
