@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.35';
+const SCRIPT_VERSION = 'v3.38';
 
 let audioCtx = null;
 
@@ -62,6 +62,8 @@ let selectedCoord = null;
 let selectedHandIndex = null;
 let movableCoords = [];
 let isCpuThinking = false;
+
+let lastMove = null;
 
 function updateVersionBadge() {
     const jsVerSpan = document.getElementById('js-version');
@@ -137,6 +139,7 @@ function initBoard() {
     board = Array(9).fill(null).map(() => Array(9).fill(null));
     hands = { sente: [], gote: [] };
     gameLogs = [];
+    lastMove = null;
 
     const setupLine = [2, 3, 4, 5, 8, 5, 4, 3, 2];
 
@@ -313,6 +316,13 @@ function render() {
             if (selectedCoord && selectedCoord.r === r && selectedCoord.c === c) cell.classList.add('selected');
             if (movableCoords.some(m => m.r === r && m.c === c)) cell.classList.add('movable');
 
+            if (lastMove) {
+                if ((lastMove.from && lastMove.from.r === r && lastMove.from.c === c) ||
+                    (lastMove.to && lastMove.to.r === r && lastMove.to.c === c)) {
+                    cell.classList.add('last-moved');
+                }
+            }
+
             const piece = board[r][c];
             if (piece) {
                 const pDiv = document.createElement('div');
@@ -405,6 +415,8 @@ function handleCellClick(r, c) {
         hands[turn].splice(selectedHandIndex, 1);
         board[r][c] = createPieceObj([pieceType], turn);
         
+        lastMove = { from: null, to: { r, c } };
+
         let pName = PIECE_DISPLAY_NAMES[pieceType].name;
         let posStr = `${9 - c}${ROW_NAMES[r]}`;
         let playerStr = turn === 'sente' ? '先手' : '後手';
@@ -461,6 +473,8 @@ function executeMove(fromR, fromC, toR, toC) {
     let fromStr = `${9 - fromC}${ROW_NAMES[fromR]}`;
     let toStr = `${9 - toC}${ROW_NAMES[toR]}`;
     let movingName = getPieceNamesStr(moving);
+
+    lastMove = { from: { r: fromR, c: fromC }, to: { r: toR, c: toC } };
 
     if (target) {
         if (target.owner === moving.owner) {
@@ -618,16 +632,13 @@ function runCpuTurn() {
             }
 
             let senteKing = findKingCoord('sente');
-            if (senteKing) {
-                if (targetPiece && targetPiece.owner === 'sente' && targetPiece.types.some(t => t.type === 8)) {
-                    score += 100000;
-                } else if (isSquareUnderAttack(senteKing.r, senteKing.c, 'gote')) {
-                    score += 2500;
-                }
-            }
-
+            
+            let isCapturingKing = false;
             if (move.type === 'board') {
-                if (targetPiece) {
+                if (targetPiece && targetPiece.owner === 'sente' && targetPiece.types.some(t => t.type === 8)) {
+                    isCapturingKing = true;
+                    score += 999999;
+                } else if (targetPiece) {
                     if (targetPiece.owner === 'sente') {
                         score += 500;
                     } else {
@@ -636,16 +647,15 @@ function runCpuTurn() {
                     }
                 }
 
-                if (cpuLevel === 3) {
+                if (!isCapturingKing && cpuLevel === 3) {
                     score += move.toR * 8;
                     if (senteKing) {
                         let dist = Math.abs(move.toR - senteKing.r) + Math.abs(move.toC - senteKing.c);
                         if (dist <= 2) score += (3 - dist) * 50;
                     }
-                } else {
+                } else if (!isCapturingKing) {
                     score += move.toR;
                 }
-
             } else if (move.type === 'drop') {
                 score += PIECE_VALUES[move.pieceType] * 12;
                 if (move.toR >= 5) score += 30;
@@ -670,6 +680,7 @@ function runCpuTurn() {
     } else if (bestMove.type === 'drop') {
         hands['gote'].splice(bestMove.handIndex, 1);
         board[bestMove.toR][bestMove.toC] = createPieceObj([bestMove.pieceType], 'gote');
+        lastMove = { from: null, to: { r: bestMove.toR, c: bestMove.toC } };
         let pName = PIECE_DISPLAY_NAMES[bestMove.pieceType].name;
         let posStr = `${9 - bestMove.toC}${ROW_NAMES[bestMove.toR]}`;
         addGameLog(`後手(CPU): ${pName}を ${posStr} に打つ`);
