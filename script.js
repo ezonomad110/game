@@ -61,6 +61,22 @@ function openRuleModal() {
     if (modal) modal.style.display = 'flex';
 }
 
+function openRuleModalFromModal() {
+    const modeModal = document.getElementById('mode-modal');
+    if (modeModal) modeModal.style.display = 'none';
+    openRuleModal();
+}
+
+function closeRuleModal() {
+    const ruleModal = document.getElementById('rule-modal');
+    if (ruleModal) ruleModal.style.display = 'none';
+    
+    // 盤面がまだ初期化されていない（最初の起動時）ならモード選択に戻す
+    if (!board.some(row => row.some(cell => cell !== null))) {
+        openModeModal();
+    }
+}
+
 function setGameMode(mode, level) {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') {
@@ -525,43 +541,6 @@ function runCpuTurn() {
     render();
 }
 
-// 確実にボタンクリック・タッチイベントをバインド
-document.addEventListener("DOMContentLoaded", () => {
-    const btnMode = document.getElementById('btn-mode');
-    const btnRule = document.getElementById('btn-rule');
-    const modePvp = document.getElementById('mode-pvp');
-    const modeCpu1 = document.getElementById('mode-cpu-1');
-    const modeCpu2 = document.getElementById('mode-cpu-2');
-    const modeCpu3 = document.getElementById('mode-cpu-3');
-    const modalOpenRule = document.getElementById('modal-open-rule');
-    const ruleCloseBtn = document.getElementById('rule-close-btn');
-
-    if (btnMode) btnMode.addEventListener('click', openModeModal);
-    if (btnRule) btnRule.addEventListener('click', openRuleModal);
-    if (modePvp) modePvp.addEventListener('click', () => setGameMode('pvp', 0));
-    if (modeCpu1) modeCpu1.addEventListener('click', () => setGameMode('cpu', 1));
-    if (modeCpu2) modeCpu2.addEventListener('click', () => setGameMode('cpu', 2));
-    if (modeCpu3) modeCpu3.addEventListener('click', () => setGameMode('cpu', 3));
-    
-    if (modalOpenRule) {
-        modalOpenRule.addEventListener('click', () => {
-            const modeModal = document.getElementById('mode-modal');
-            if (modeModal) modeModal.style.display = 'none';
-            openRuleModal();
-        });
-    }
-
-    if (ruleCloseBtn) {
-        ruleCloseBtn.addEventListener('click', () => {
-            const ruleModal = document.getElementById('rule-modal');
-            if (ruleModal) ruleModal.style.display = 'none';
-            if (!board.some(row => row.some(cell => cell !== null))) {
-                openModeModal();
-            }
-        });
-    }
-
-    openModeModal();
-    initBoard();
-    render();
-});
+// 初期化
+initBoard();
+render();
