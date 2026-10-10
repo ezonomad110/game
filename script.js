@@ -189,7 +189,7 @@ function getRawMoves(type, isPromoted, owner, r, c) {
             if (isPromoted) [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(o => addStep(moves, r+o[0], c+o[1]));
             break;
         case 8:
-            [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1']].forEach(o => addStep(moves, r+o[0], c+o[1]));
+            [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(o => addStep(moves, r+o[0], c+o[1]));
             break;
     }
     return moves;
