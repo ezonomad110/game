@@ -1,31 +1,36 @@
-const SCRIPT_VERSION = 'v3.31';
+const SCRIPT_VERSION = 'v3.35';
 
 let audioCtx = null;
 
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
 function playPachiSound() {
     try {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        initAudio();
+        if (!audioCtx) return;
 
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
 
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
+        osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
 
-        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
 
         osc.connect(gain);
         gain.connect(audioCtx.destination);
 
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.04);
+        osc.stop(audioCtx.currentTime + 0.05);
     } catch (e) {}
 }
 
@@ -91,21 +96,25 @@ function getPieceNamesStr(pieceObj) {
 }
 
 function openModeModal() {
+    initAudio();
     document.getElementById('mode-modal').style.display = 'flex';
     document.getElementById('rule-modal').style.display = 'none';
 }
 
 function openRuleModalFromModal() {
+    initAudio();
     document.getElementById('mode-modal').style.display = 'none';
     document.getElementById('rule-modal').style.display = 'flex';
 }
 
 function closeRuleModal() {
+    initAudio();
     document.getElementById('rule-modal').style.display = 'none';
     document.getElementById('mode-modal').style.display = 'flex';
 }
 
 function setGameMode(mode, level) {
+    initAudio();
     playPachiSound();
     gameMode = mode;
     cpuLevel = level;
@@ -332,7 +341,10 @@ function render() {
                 pDiv.appendChild(innerDiv);
                 cell.appendChild(pDiv);
             }
-            cell.addEventListener('click', () => handleCellClick(r, c));
+            cell.addEventListener('click', () => {
+                initAudio();
+                handleCellClick(r, c);
+            });
             container.appendChild(cell);
         }
     }
@@ -354,6 +366,7 @@ function renderHands() {
             hp.textContent = PIECE_DISPLAY_NAMES[typeId].name;
             hp.addEventListener('click', (e) => {
                 e.stopPropagation();
+                initAudio();
                 if (turn === player && !(gameMode === 'cpu' && player === 'gote' && isCpuThinking)) {
                     handleHandClick(index);
                 }
