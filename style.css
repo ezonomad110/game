@@ -228,26 +228,39 @@ h1 {
     clip-path: polygon(25% 0%, 75% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%);
 }
 
-/* 先手（自分）の駒：明るい木目・黄褐色系 */
-.piece.sente {
+/* 先手（自分）の駒：明るい木目・黄褐色系（デフォルト） */
+.piece {
     background: linear-gradient(135deg, #f7d794, #e7c16d);
     color: #2b2b2b;
 }
 
-/* 後手（CPU/相手）の駒：深みのある赤茶系 */
-.piece.gote {
-    background: linear-gradient(135deg, #d89a72, #b26841);
-    color: #fff9f0;
-}
-
-/* 合体（スタッキング）した駒 */
+/* 先手の合体駒 */
 .piece.merged {
     background: linear-gradient(135deg, #ffeaa7, #fdcb6e) !important;
     color: #2d3436 !important;
-    box-shadow: 0 0 6px rgba(253, 203, 110, 0.7);
+    border: 1.5px solid #d4ac0d;
+    box-shadow: 0 0 5px rgba(253, 203, 110, 0.7);
 }
 
-/* 後手の駒の中身（文字・グリッド）のみを180度回転させて逆さまにする */
+/* ⭐️ 文字の向き（逆さま＝180度回転）が適用されている「後手」の駒は、色も必ず赤茶系にする！ */
+.piece:has(.piece-content-inner) {
+    /* フォールバック用 */
+}
+
+/* .piece.gote または 中身が回転する構造を持つ後手の駒の配色 */
+.piece.gote {
+    background: linear-gradient(135deg, #d89a72, #b26841) !important;
+    color: #fff9f0 !important;
+}
+
+.piece.gote.merged {
+    background: linear-gradient(135deg, #e6a882, #9e4f28) !important;
+    color: #fff9f0 !important;
+    border: 1.5px solid #632b13;
+    box-shadow: 0 0 5px rgba(158, 79, 40, 0.7);
+}
+
+/* 後手の駒の中身（単体でも合体でも）を180度回転させて逆さまにする */
 .piece.gote .piece-content-inner {
     transform: rotate(180deg);
 }
@@ -267,16 +280,12 @@ h1 {
     line-height: 1;
 }
 
-.sub-piece.promoted {
+.piece.sente .sub-piece.promoted {
     color: #c0392b;
 }
 
 .piece.gote .sub-piece.promoted {
     color: #ffcccc;
-}
-
-.piece.merged .sub-piece.promoted {
-    color: #c0392b !important;
 }
 
 /* 4分割グリッド（合体時） */
