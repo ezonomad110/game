@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>重将棋 (ちょうぎ)</title>
-    <!-- style.css v3.35 -->
-    <link rel="stylesheet" href="style.css?v=3.35">
+    <title>重棋 (ちょうぎ)</title>
+    <!-- style.css v3.38 -->
+    <link rel="stylesheet" href="style.css?v=3.38">
 </head>
 <body>
 
     <div class="header-area">
         <div>
-            <h1>重将棋 <span class="header-ruby">(ちょうぎ)</span></h1>
+            <h1>重棋 <span class="header-ruby">(ちょうぎ)</span></h1>
         </div>
         <div class="header-right">
             <button class="header-btn" onclick="openModeModal()">モード設定</button>
             <div id="version-badge" class="version-badge">
-                HTML: v3.35<br>
+                HTML: v3.38<br>
                 JS: <span id="js-version">読み込み中...</span><br>
-                CSS: v3.35
+                CSS: v3.38
             </div>
         </div>
     </div>
@@ -67,8 +67,8 @@
     <!-- モード選択モーダル -->
     <div id="mode-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>重将棋へようこそ</h2>
-            <p style="font-size: 0.85rem; color: #d0c0a0; margin: 8px 0;">駒を重ねて合体できる変則将棋</p>
+            <h2>重棋へようこそ</h2>
+            <p style="font-size: 0.85rem; color: #d0c0a0; margin: 8px 0;">駒を重ねて合体できる変則ボードゲーム</p>
             <div class="modal-buttons">
                 <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 1)">対CPU戦 (初級)</button>
                 <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 2)">対CPU戦 (中級)</button>
@@ -92,7 +92,7 @@
                 </ul>
                 <p><strong>【操作方法】</strong></p>
                 <ul>
-                    <li>自分の駒をクリックすると移動可能なマスが緑のドットで表示されます。</li>
+                    <li>自分の駒をクリックすると移動可能なマスが緑のドットで表示されます。直前に動いたマスはハイライト表示されます。</li>
                     <li>自分の駒があるマスに重ねると合体します（所有権や色は変わりません）。</li>
                 </ul>
             </div>
@@ -102,7 +102,7 @@
         </div>
     </div>
 
-    <!-- script.js v3.35 -->
-    <script src="script.js?v=3.35"></script>
+    <!-- script.js v3.38 -->
+    <script src="script.js?v=3.38"></script>
 </body>
 </html>
