@@ -11,8 +11,9 @@
     <div class="header-area">
         <h1>重棋 <span class="header-ruby">(ちょうぎ)</span></h1>
         <div class="header-right">
-            <button id="mode-toggle-btn" onclick="toggleGameMode()">対人戦</button>
-            <span class="version-badge">[v3.8]</span>
+            <button class="header-btn" onclick="openModeModal()">モード設定</button>
+            <a href="rules.html" target="_blank" class="header-btn rules-link">ルール</a>
+            <span class="version-badge">[v3.9]</span>
         </div>
     </div>
 
@@ -46,8 +47,21 @@
             <div id="sente-hand-pieces" class="hand-pieces-inner"></div>
         </div>
         <div class="hud-info">
-            <span class="player-name">先手 (あなた)</span>
+            <span class="player-name" id="sente-name">先手 (あなた)</span>
             <span class="turn-indicator">▲ 手番</span>
+        </div>
+    </div>
+
+    <!-- モード・難易度選択モーダル -->
+    <div id="mode-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>対局モードを選択</h2>
+            <div class="modal-buttons">
+                <button class="mode-select-btn" onclick="setGameMode('pvp', 0)">対人戦 (2人プレイ)</button>
+                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 1)">vs CPU (初級)</button>
+                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 2)">vs CPU (中級)</button>
+                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 3)">vs CPU (上級)</button>
+            </div>
         </div>
     </div>
 
