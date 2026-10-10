@@ -1,4 +1,4 @@
-/* style.css v3.38 */
+/* style.css v3.42 */
 body {
     font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
     background-color: #1e1e1e;
@@ -300,12 +300,13 @@ h1 {
     line-height: 1;
 }
 
+/* 成り駒の文字色：先手も後手もはっきりした赤字に統一 */
 .sub-piece.promoted {
     color: #c0392b;
 }
 
 .piece.gote .sub-piece.promoted {
-    color: #ffcccc;
+    color: #ff4d4d;
 }
 
 /* ログパネル */
