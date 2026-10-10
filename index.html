@@ -10,13 +10,16 @@
 
     <div class="header-area">
         <h1>重棋 <span class="header-ruby">(ちょうぎ)</span></h1>
-        <span class="version-badge">[v3.7]</span>
+        <div class="header-right">
+            <button id="mode-toggle-btn" onclick="toggleGameMode()">対人戦</button>
+            <span class="version-badge">[v3.8]</span>
+        </div>
     </div>
 
     <!-- 後手エリア -->
     <div class="player-hud gote-hud" id="gote-hud">
         <div class="hud-info">
-            <span class="player-name">後手</span>
+            <span class="player-name" id="gote-name">後手 (CPU)</span>
             <span class="turn-indicator">▼ 手番</span>
         </div>
         <div class="hand-container" id="gote-hand">
@@ -43,7 +46,7 @@
             <div id="sente-hand-pieces" class="hand-pieces-inner"></div>
         </div>
         <div class="hud-info">
-            <span class="player-name">先手</span>
+            <span class="player-name">先手 (あなた)</span>
             <span class="turn-indicator">▲ 手番</span>
         </div>
     </div>
