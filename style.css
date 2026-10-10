@@ -1,4 +1,4 @@
-/* style.css v3.42 */
+/* style.css v3.46 */
 body {
     font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
     background-color: #1e1e1e;
@@ -247,7 +247,7 @@ h1 {
     color: #fff9f0;
 }
 
-/* 合体駒（外枠線なし） */
+/* 合体駒 */
 .piece.sente.merged {
     background: linear-gradient(135deg, #ffeaa7, #fdcb6e) !important;
     color: #2d3436 !important;
@@ -300,7 +300,7 @@ h1 {
     line-height: 1;
 }
 
-/* 成り駒の文字色：先手も後手もはっきりした赤字に統一 */
+/* 成り駒の文字色：はっきりした赤字に統一 */
 .sub-piece.promoted {
     color: #c0392b;
 }
