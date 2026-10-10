@@ -399,14 +399,17 @@ function executeMove(fromR, fromC, toR, toC) {
 
     if (target) {
         if (target.owner === moving.owner) {
+            // 自分同士の駒を重ねた場合（所有者は元のターゲットのものを厳守）
             if (target.types.length + moving.types.length > 4) {
                 alert("駒は最大4つまでしか重ねられません！");
                 return;
             }
             target.types.push(...moving.types);
-            // 所有者は既存の所有者を維持する（勝手に上書きしない）
+            // ⭐️重要：所有者は絶対に元のターゲット（＝その場の持ち主）のままにする！
+            target.owner = target.owner; 
             board[fromR][fromC] = null;
         } else {
+            // 異なる所有者の駒がぶつかった場合
             if (target.types.some(t => t.type === 8)) {
                 playPachiSound();
                 render();
@@ -419,15 +422,15 @@ function executeMove(fromR, fromC, toR, toC) {
                 return;
             }
 
-            // 相手の駒を取った場合：相手の持ち駒には入れず、自分の持ち駒にする（通常の将棋のルール）
-            target.types.forEach(p => {
-                if (p.type !== 8) {
-                    hands[turn].push(p.type);
-                }
-            });
-            board[toR][toC] = moving;
-            board[fromR][fromC] = null;
-            checkPromotion(board[toR][toC], fromR, toR, turn);
+            if (target.types.length + moving.types.length <= 4) {
+                let originalTargetOwner = target.owner;
+                target.types.push(...moving.types);
+                target.owner = originalTargetOwner; // 相手のエリア/相手の駒なので相手の所有者のまま
+                board[fromR][fromC] = null;
+            } else {
+                alert("駒は最大4つまでしか重ねられません！");
+                return;
+            }
         }
     } else {
         board[toR][toC] = moving;
@@ -521,7 +524,8 @@ function runCpuTurn() {
                 board[move.fromR][move.fromC] = null;
                 capturedPiece = targetPiece;
 
-                if (targetPiece && targetPiece.owner === movingPiece.owner) {
+                if (targetPiece) {
+                    // ⭐️シミュレーション時も元のターゲットの owner を厳守して結合する
                     let simulatedTypes = [...targetPiece.types, ...movingPiece.types];
                     board[move.toR][move.toC] = { types: simulatedTypes, owner: targetPiece.owner };
                 } else {
@@ -552,16 +556,9 @@ function runCpuTurn() {
 
             if (move.type === 'board') {
                 if (targetPiece) {
-                    if (targetPiece.owner === 'sente') {
-                        let targetVal = targetPiece.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0);
-                        let movingVal = movingPiece.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0);
-                        score += targetVal * 30;
-                        if (targetVal > movingVal) score += 60;
-                    } else if (targetPiece.owner === 'gote') {
-                        let stackCountAfter = targetPiece.types.length + movingPiece.types.length;
-                        score += stackCountAfter * 25;
-                        score += 20;
-                    }
+                    let stackCountAfter = targetPiece.types.length + movingPiece.types.length;
+                    score += stackCountAfter * 25;
+                    score += 20;
                 }
 
                 if (cpuLevel === 3) {
