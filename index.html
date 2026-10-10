@@ -12,8 +12,8 @@
         <h1>重棋 <span class="header-ruby">(ちょうぎ)</span></h1>
         <div class="header-right">
             <button class="header-btn" onclick="openModeModal()">モード設定</button>
-            <a href="rules.html" target="_blank" class="header-btn rules-link">ルール</a>
-            <span class="version-badge">[v3.9]</span>
+            <button class="header-btn" onclick="openRuleModal()">ルール</button>
+            <span class="version-badge">[v3.11]</span>
         </div>
     </div>
 
@@ -60,8 +60,27 @@
                 <button class="mode-select-btn" onclick="setGameMode('pvp', 0)">対人戦 (2人プレイ)</button>
                 <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 1)">vs CPU (初級)</button>
                 <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 2)">vs CPU (中級)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 3)">vs CPU (上級)</button>
+                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 3)">vs CPU (上級・強)</button>
+                <button class="mode-select-btn rule-open-btn" onclick="openRuleModalFromModal()">ルールを読む</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ルールブック モーダル -->
+    <div id="rule-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content rule-modal-content">
+            <h2>重棋 (Chogi) ルール</h2>
+            <div class="rule-body">
+                <p><strong>1. 概要:</strong> 通常の9×9将棋盤で、自分の駒同士を重ねてパワーアップさせるゲームです。</p>
+                <p><strong>2. 合体（スタッキング）制限:</strong></p>
+                <ul>
+                    <li>1つのマスに重ねられるのは<strong>最大4つまで</strong>です（5個以上の合体や移動は不可）。</li>
+                    <li>自分の「歩」同士の合体は禁止です。「二歩」も禁止されています。</li>
+                    <li>王将（玉将）は他の駒と合体できません。</li>
+                </ul>
+                <p><strong>3. 勝利条件:</strong> 相手の王将を捕らえた方の勝ちとなります。</p>
+            </div>
+            <button class="mode-select-btn" onclick="closeRuleModal()">閉じる</button>
         </div>
     </div>
 
