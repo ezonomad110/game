@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>重棋 (ちょうぎ)</title>
-    <!-- style.css v3.45 -->
-    <link rel="stylesheet" href="style.css?v=3.45">
+    <!-- style.css v3.46 -->
+    <link rel="stylesheet" href="style.css?v=3.46">
 </head>
 <body>
 
@@ -17,9 +17,9 @@
             <button class="header-btn" onclick="undoMove()">待った</button>
             <button class="header-btn" onclick="openModeModal()">モード設定</button>
             <div id="version-badge" class="version-badge">
-                HTML: v3.45<br>
+                HTML: v3.46<br>
                 JS: <span id="js-version">読み込み中...</span><br>
-                CSS: v3.45
+                CSS: v3.46
             </div>
         </div>
     </div>
@@ -65,8 +65,19 @@
         <div id="game-log-container" class="log-container"></div>
     </div>
 
+    <!-- 成り確認カスタムモーダル -->
+    <div id="promote-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="promote-modal-title">成りますか？</h2>
+            <div class="modal-buttons" style="flex-direction: row; justify-content: space-around; margin-top: 16px;">
+                <button class="mode-select-btn" style="flex: 1;" onclick="resolvePromote(true)">はい</button>
+                <button class="mode-select-btn cpu-btn" style="flex: 1;" onclick="resolvePromote(false)">いいえ</button>
+            </div>
+        </div>
+    </div>
+
     <!-- モード選択モーダル -->
-    <div id="mode-modal" class="modal-overlay">
+    <div id="mode-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h2>重棋へようこそ</h2>
             <p style="font-size: 0.85rem; color: #d0c0a0; margin: 8px 0;">駒を重ねて合体できる変則ボードゲーム</p>
@@ -87,8 +98,7 @@
             <div class="rule-body">
                 <p><strong>【基本ルール】</strong></p>
                 <ul>
-                    <li>通常の将棋の駒に加え、同じマスに最大4つまで自分の駒を重ねて合体させることができます。</li>
-                    <li>相手の駒がいるマスには移動して駒を取る（キャプチャする）ことができます。</li>
+                    <li>同じマスに最大4つまで自分の駒を重ねて合体させることができます。</li>
                     <li>王将（玉将）を捕らえると勝利です。</li>
                     <li>敵陣に入って成った駒は、元の駒名のまま**赤字**で表示されます（個別選択可能）。</li>
                 </ul>
@@ -99,7 +109,7 @@
         </div>
     </div>
 
-    <!-- script.js v3.45 -->
-    <script src="script.js?v=3.45"></script>
+    <!-- script.js v3.46 -->
+    <script src="script.js?v=3.46"></script>
 </body>
 </html>
