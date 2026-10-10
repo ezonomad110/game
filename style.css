@@ -1,4 +1,4 @@
-/* style.css v3.35 */
+/* style.css v3.38 */
 body {
     font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
     background-color: #1e1e1e;
@@ -209,6 +209,10 @@ h1 {
     background-color: rgba(220, 179, 92, 0.4);
 }
 
+.cell.last-moved {
+    background-color: rgba(230, 126, 34, 0.35);
+}
+
 .cell.movable::after {
     content: '';
     width: 8px;
@@ -243,7 +247,7 @@ h1 {
     color: #fff9f0;
 }
 
-/* 合体駒（外枠線なし・美しい発光感） */
+/* 合体駒（外枠線なし） */
 .piece.sente.merged {
     background: linear-gradient(135deg, #ffeaa7, #fdcb6e) !important;
     color: #2d3436 !important;
@@ -402,7 +406,6 @@ h1 {
 .rule-open-btn {
     background: #4a3b2c;
     color: #f3e5c8;
-    border: 1px solid #dcb35c;
 }
 
 .rule-modal-content {
