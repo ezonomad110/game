@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.46';
+const SCRIPT_VERSION = 'v3.47';
 
 let audioCtx = null;
 
@@ -81,7 +81,6 @@ let isGameOver = false;
 let lastMove = null;
 let historyStack = [];
 
-// 成り確認モーダル用のコールバック変数
 let promoteResolver = null;
 
 function updateVersionBadge() {
@@ -609,7 +608,6 @@ async function executeMove(fromR, fromC, toR, toC) {
     playPachiSound();
 }
 
-// カスタム成り確認モーダルをPromiseで待機させる関数
 function promptPromote(pieceName) {
     return new Promise((resolve) => {
         promoteResolver = resolve;
@@ -745,12 +743,20 @@ async function runCpuTurn() {
                 score += 15000;
             }
 
+            // 【強化版】タダ捨て防止＆損な交換の防止（移動・駒取り共通）
             let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
             let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
             
             if (isUnderSenteAttack && !isProtectedByGote) {
                 let pieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
-                score -= pieceVal * 300;
+                score -= pieceVal * 400; // ペナルティを強化して自滅を防ぐ
+            } else if (isUnderSenteAttack && targetPiece && targetPiece.owner === 'sente') {
+                // 駒を取りに行くが、相手の利きがある場合（損な交換になるかをチェック）
+                let myPieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
+                let capturedVal = getPieceTotalValue(targetPiece);
+                if (myPieceVal > capturedVal) {
+                    score -= (myPieceVal - capturedVal) * 200; // 割に合わない駒交換を回避
+                }
             }
 
             if (newGoteKing) {
@@ -840,7 +846,7 @@ async function runCpuTurn() {
         lastMove = { from: null, to: { r: bestMove.toR, c: bestMove.toC } };
         let pName = PIECE_DISPLAY_NAMES[bestMove.pieceType].name;
         let posStr = `${9 - bestMove.toC}${ROW_NAMES[bestMove.toR]}`;
-        addGameLog(`後手(CPU): ${pName}를 ${posStr} に打つ`);
+        addGameLog(`後手(CPU): ${pName}を ${posStr} に打つ`);
         playPachiSound();
     }
 
