@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>合体将棋 (Gattai Shogi)</title>
+    <title>重棋 (Chogi)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div style="display: flex; justify-content: space-between; align-items: baseline; width: 100%; max-width: 440px; padding: 0 4px;">
-        <h1 style="margin: 4px 0;">合体将棋</h1>
-        <span style="font-size: 0.75rem; color: #ffadad; font-weight: bold;">[v3.0 適用中]</span>
+    <div class="header-area">
+        <h1>重棋 <span style="font-size: 0.75rem; font-weight: normal; color: #dcb35c;">(ちょうぎ)</span></h1>
+        <span class="version-badge">[v3.1]</span>
     </div>
     <div id="status">先手の番です</div>
 
@@ -19,7 +19,18 @@
         <div id="gote-hand-pieces" class="hand-pieces-inner gote-pieces"></div>
     </div>
 
-    <div id="board-container"></div>
+    <!-- 座標付き将棋盤 -->
+    <div class="shogi-board-wrapper">
+        <div class="coords-top">
+            <span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+        </div>
+        <div class="board-with-side">
+            <div id="board-container"></div>
+            <div class="coords-right">
+                <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>七</span><span>八</span><span>九</span>
+            </div>
+        </div>
+    </div>
 
     <div class="hand-container" id="sente-hand">
         <span class="hand-label">先手持ち駒:</span>
