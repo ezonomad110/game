@@ -32,7 +32,6 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     font-weight: bold;
     cursor: pointer;
     font-family: sans-serif;
-    text-decoration: none;
 }
 .header-btn:active { background: #3d2614; }
 
@@ -58,23 +57,38 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     text-align: center;
     box-shadow: 0 10px 25px rgba(0,0,0,0.6);
 }
+.rule-modal-content {
+    max-width: 360px;
+    text-align: left;
+}
+.rule-body {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #e0d8c8;
+    max-height: 250px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding-right: 4px;
+}
+.rule-body ul { padding-left: 18px; margin: 4px 0; }
+
 .modal-content h2 {
     color: #f3e5c8;
     font-size: 1.1rem;
     margin-top: 0;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 .modal-buttons {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 .mode-select-btn {
-    padding: 10px;
+    padding: 8px;
     background: linear-gradient(to bottom, #fffef0, #f2e2bc);
     border: 2px solid #8b5a2b;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: bold;
     color: #2c1d0c;
     cursor: pointer;
@@ -83,6 +97,12 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     background: linear-gradient(to bottom, #5c3a21, #3d2614);
     color: #f3e5c8;
     border-color: #dcb35c;
+}
+.mode-select-btn.rule-open-btn {
+    background: #2b3e50;
+    color: #aed6f1;
+    border-color: #5499c7;
+    margin-top: 4px;
 }
 .mode-select-btn:active { transform: scale(0.98); }
 
@@ -178,7 +198,6 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     aspect-ratio: 1 / 1;
 }
 
-/* 右側座標の位置合わせ */
 .coords-right {
     display: grid;
     grid-template-rows: repeat(9, 1fr);
@@ -227,7 +246,6 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     box-shadow: 0 0 4px #27ae60;
 }
 
-/* 駒のデザイン */
 .piece {
     width: 88%;
     height: 92%;
