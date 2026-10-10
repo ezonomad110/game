@@ -20,22 +20,71 @@ body {
 }
 h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
 .header-ruby { font-size: 0.75rem; font-weight: normal; color: #dcb35c; }
-.header-right { display: flex; align-items: center; gap: 8px; }
+.header-right { display: flex; align-items: center; gap: 6px; }
 
-#mode-toggle-btn {
+.header-btn {
     background: #5c3a21;
     color: #f3e5c8;
     border: 1px solid #dcb35c;
     border-radius: 4px;
-    padding: 2px 8px;
+    padding: 2px 6px;
     font-size: 0.7rem;
     font-weight: bold;
     cursor: pointer;
     font-family: sans-serif;
+    text-decoration: none;
 }
-#mode-toggle-btn:active { background: #3d2614; }
+.header-btn:active { background: #3d2614; }
 
 .version-badge { font-size: 0.7rem; color: #ffadad; font-weight: bold; font-family: sans-serif; }
+
+/* モダル画面 */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: #382c20;
+    border: 3px solid #dcb35c;
+    border-radius: 8px;
+    padding: 20px;
+    width: 90%;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+.modal-content h2 {
+    color: #f3e5c8;
+    font-size: 1.1rem;
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+.modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.mode-select-btn {
+    padding: 10px;
+    background: linear-gradient(to bottom, #fffef0, #f2e2bc);
+    border: 2px solid #8b5a2b;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #2c1d0c;
+    cursor: pointer;
+}
+.mode-select-btn.cpu-btn {
+    background: linear-gradient(to bottom, #5c3a21, #3d2614);
+    color: #f3e5c8;
+    border-color: #dcb35c;
+}
+.mode-select-btn:active { transform: scale(0.98); }
 
 /* プレイヤーHUD＆持ち駒トレイ */
 .player-hud {
@@ -129,7 +178,7 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     aspect-ratio: 1 / 1;
 }
 
-/* 右側座標の完璧な位置合わせ */
+/* 右側座標の位置合わせ */
 .coords-right {
     display: grid;
     grid-template-rows: repeat(9, 1fr);
@@ -194,7 +243,6 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
 .piece.sente { color: #111; }
 .piece.gote { color: #111; transform: rotate(180deg); }
 
-/* 合体駒（ゴールド感＋★マーク） */
 .piece.merged {
     background: linear-gradient(to bottom, #fffbeb, #fae19c);
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.85);
@@ -209,14 +257,12 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     z-index: 2;
 }
 
-/* 単体駒の文字表示 */
 .single-piece-text {
     font-size: 1.05rem;
     font-weight: bold;
     line-height: 1;
 }
 
-/* 複数合体時（2〜4個）の2x2グリッド配置 */
 .piece-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
