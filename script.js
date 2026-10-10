@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.44';
+const SCRIPT_VERSION = 'v3.45';
 
 let audioCtx = null;
 
@@ -76,8 +76,10 @@ let selectedCoord = null;
 let selectedHandIndex = null;
 let movableCoords = [];
 let isCpuThinking = false;
+let isGameOver = false;
 
 let lastMove = null;
+let historyStack = [];
 
 function updateVersionBadge() {
     const jsVerSpan = document.getElementById('js-version');
@@ -153,6 +155,8 @@ function initBoard() {
     hands = { sente: [], gote: [] };
     gameLogs = [];
     lastMove = null;
+    historyStack = [];
+    isGameOver = false;
 
     const setupLine = [2, 3, 4, 5, 8, 5, 4, 3, 2];
 
@@ -174,9 +178,64 @@ function initBoard() {
 
 function createPieceObj(types, owner) {
     return {
-        types: types.map(t => typeof t === 'number' ? { type: t, isPromoted: false } : t),
+        types: types.map(t => typeof t === 'number' ? { type: t, isPromoted: false } : { type: t.type, isPromoted: !!t.isPromoted }),
         owner: owner
     };
+}
+
+// 現在の状態をディープコピーして履歴に保存する
+function saveHistory() {
+    let boardCopy = board.map(row => row.map(cell => {
+        if (!cell) return null;
+        return {
+            owner: cell.owner,
+            types: cell.types.map(t => ({ type: t.type, isPromoted: t.isPromoted }))
+        };
+    }));
+    let handsCopy = {
+        sente: [...hands.sente],
+        gote: [...hands.gote]
+    };
+    historyStack.push({
+        board: boardCopy,
+        hands: handsCopy,
+        turn: turn,
+        lastMove: lastMove ? { from: lastMove.from ? {...lastMove.from} : null, to: {...lastMove.to} } : null
+    });
+}
+
+// 待った機能
+function undoMove() {
+    if (isGameOver) {
+        alert("対局はすでに終了しています。");
+        return;
+    }
+    if (historyStack.length === 0) {
+        alert("これ以上戻せません。");
+        return;
+    }
+
+    // 対CPU戦の場合、プレイヤーの手番に戻るために2手戻す（プレイヤーの直前の手＋CPUの手）
+    // PvPの場合は1手戻す
+    let stepsToUndo = (gameMode === 'cpu' && historyStack.length >= 2) ? 2 : 1;
+    let prevState = null;
+
+    for (let i = 0; i < stepsToUndo; i++) {
+        if (historyStack.length > 0) {
+            prevState = historyStack.pop();
+        }
+    }
+
+    if (prevState) {
+        board = prevState.board;
+        hands = prevState.hands;
+        turn = prevState.turn;
+        lastMove = prevState.lastMove;
+        resetSelection();
+        addGameLog("「待った」を行いました。");
+        playPachiSound();
+        render();
+    }
 }
 
 function hasNifu(col, owner) {
@@ -370,6 +429,7 @@ function render() {
                 cell.appendChild(pDiv);
             }
             cell.addEventListener('click', () => {
+                if (isGameOver) return;
                 initAudio();
                 handleCellClick(r, c);
             });
@@ -394,6 +454,7 @@ function renderHands() {
             hp.textContent = PIECE_DISPLAY_NAMES[typeId].name;
             hp.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (isGameOver) return;
                 initAudio();
                 if (turn === player && !(gameMode === 'cpu' && player === 'gote' && isCpuThinking)) {
                     handleHandClick(index);
@@ -421,6 +482,7 @@ function updateHUD() {
 }
 
 function handleCellClick(r, c) {
+    if (isGameOver) return;
     if (gameMode === 'cpu' && turn === 'gote' && isCpuThinking) return;
 
     if (selectedHandIndex !== null && movableCoords.some(m => m.r === r && m.c === c)) {
@@ -429,6 +491,8 @@ function handleCellClick(r, c) {
             alert("同じ筋に歩を2枚打つ「二歩」は禁止されています！");
             return;
         }
+
+        saveHistory(); // 手を指す前に履歴保存
 
         hands[turn].splice(selectedHandIndex, 1);
         board[r][c] = createPieceObj([pieceType], turn);
@@ -447,9 +511,12 @@ function handleCellClick(r, c) {
     }
 
     if (selectedCoord && movableCoords.some(m => m.r === r && m.c === c)) {
+        saveHistory(); // 手を指す前に履歴保存
         executeMove(selectedCoord.r, selectedCoord.c, r, c);
         resetSelection();
-        switchTurn();
+        if (!isGameOver) {
+            switchTurn();
+        }
         return;
     }
 
@@ -467,6 +534,7 @@ function handleCellClick(r, c) {
 }
 
 function handleHandClick(index) {
+    if (isGameOver) return;
     selectedCoord = null;
     if (selectedHandIndex === index) {
         resetSelection();
@@ -498,6 +566,7 @@ function executeMove(fromR, fromC, toR, toC) {
         if (target.owner === moving.owner) {
             if (target.types.length + moving.types.length > 4) {
                 alert("駒は最大4つまでしか重ねられません！");
+                historyStack.pop(); // エラー時は履歴を戻す
                 return;
             }
             let targetNameBefore = getPieceNamesStr(target);
@@ -508,14 +577,16 @@ function executeMove(fromR, fromC, toR, toC) {
             addGameLog(`${playerStr}: ${movingName} が ${fromStr} から ${toStr} へ移動し自分の [${targetNameBefore}] と合体 (${targetNameAfter})`);
         } else {
             if (target.types.some(t => t.type === 8)) {
-                addGameLog(`${playerStr}: 王を捕獲！`);
+                // 王を捕らえた側の勝ち（turnが勝者）
+                let winnerStr = (turn === 'sente') ? '先手' : '後手';
+                addGameLog(`${winnerStr}: 王を捕獲！`);
                 playPachiSound();
+                board[toR][toC] = moving;
+                board[fromR][fromC] = null;
+                isGameOver = true;
                 render();
                 setTimeout(() => {
-                    alert(`${turn === 'sente' ? '先手' : '後手'}の勝利です！（王将を捕らえました）`);
-                    initBoard();
-                    openModeModal();
-                    render();
+                    alert(`${winnerStr}の勝利です！（王将を捕らえました）`);
                 }, 100);
                 return;
             }
@@ -540,7 +611,6 @@ function executeMove(fromR, fromC, toR, toC) {
     playPachiSound();
 }
 
-// 各駒ごとに個別の成り判定を行う関数
 function checkPromotion(pieceObj, fromR, toR, playerTurn) {
     let enemyZone = (playerTurn === 'sente') ? [0, 1, 2] : [6, 7, 8];
     let isEnemyArea = enemyZone.includes(fromR) || enemyZone.includes(toR);
@@ -558,7 +628,6 @@ function checkPromotion(pieceObj, fromR, toR, playerTurn) {
                         addGameLog(`${playerStr}: ${pieceName} は成らず`);
                     }
                 } else {
-                    // CPUは原則すべて成る
                     p.isPromoted = true;
                     addGameLog(`${playerStr}(CPU): ${pieceName} を成りました`);
                 }
@@ -568,16 +637,19 @@ function checkPromotion(pieceObj, fromR, toR, playerTurn) {
 }
 
 function switchTurn() {
+    if (isGameOver) return;
     turn = (turn === 'sente') ? 'gote' : 'sente';
     render();
 
-    if (gameMode === 'cpu' && turn === 'gote') {
+    if (gameMode === 'cpu' && turn === 'gote' && !isGameOver) {
         isCpuThinking = true;
         setTimeout(runCpuTurn, 600);
     }
 }
 
 function runCpuTurn() {
+    if (isGameOver) return;
+
     let allMoves = [];
 
     for (let r = 0; r < 9; r++) {
@@ -601,11 +673,16 @@ function runCpuTurn() {
 
     if (allMoves.length === 0) {
         addGameLog("後手（CPU）の指せる手がないため先手の勝利です。");
-        alert("後手（CPU）の指せる手がありません。先手の勝利です！");
+        isGameOver = true;
+        render();
+        setTimeout(() => {
+            alert("後手（CPU）の指せる手がありません。先手の勝利です！");
+        }, 100);
         isCpuThinking = false;
-        openModeModal();
         return;
     }
+
+    saveHistory(); // CPUの手の前に履歴保存
 
     let bestMove;
 
@@ -751,8 +828,10 @@ function runCpuTurn() {
     }
 
     isCpuThinking = false;
-    turn = 'sente';
-    render();
+    if (!isGameOver) {
+        turn = 'sente';
+        render();
+    }
 }
 
 initBoard();
