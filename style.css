@@ -1,4 +1,4 @@
-/* style.css v3.31 */
+/* style.css v3.35 */
 body {
     font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
     background-color: #1e1e1e;
@@ -218,7 +218,7 @@ h1 {
     position: absolute;
 }
 
-/* 駒のデザイン（将棋らしい美しい五角形シェイプ） */
+/* 駒のデザイン */
 .piece {
     width: 32px;
     height: 34px;
@@ -230,6 +230,7 @@ h1 {
     position: relative;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     clip-path: polygon(20% 0%, 80% 0%, 100% 18%, 100% 100%, 0% 100%, 0% 18%);
+    border: none;
 }
 
 .piece.sente {
@@ -242,19 +243,21 @@ h1 {
     color: #fff9f0;
 }
 
+/* 合体駒（外枠線なし・美しい発光感） */
 .piece.sente.merged {
     background: linear-gradient(135deg, #ffeaa7, #fdcb6e) !important;
     color: #2d3436 !important;
-    border: 1.5px solid #d4ac0d;
+    border: none !important;
+    box-shadow: 0 0 6px rgba(220, 179, 92, 0.8);
 }
 
 .piece.gote.merged {
     background: linear-gradient(135deg, #e6a882, #9e4f28) !important;
     color: #fff9f0 !important;
-    border: 1.5px solid #632b13;
+    border: none !important;
+    box-shadow: 0 0 6px rgba(158, 79, 40, 0.8);
 }
 
-/* 後手の駒全体を180度回転させて対面視点にする */
 .piece.gote {
     transform: rotate(180deg);
 }
@@ -267,13 +270,11 @@ h1 {
     justify-content: center;
 }
 
-/* 単体駒の文字を大きく */
 .single-piece-text {
     font-size: 1.05rem;
     line-height: 1;
 }
 
-/* 最大4文字になったときでも綺麗に収まる2x2グリッド */
 .piece-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -286,7 +287,6 @@ h1 {
     justify-items: center;
 }
 
-/* 4分割時の文字サイズ（4文字でもはみ出さないサイズ感） */
 .sub-piece {
     font-size: 0.58rem;
     font-weight: bold;
