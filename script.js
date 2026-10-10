@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.43';
+const SCRIPT_VERSION = 'v3.44';
 
 let audioCtx = null;
 
@@ -540,28 +540,30 @@ function executeMove(fromR, fromC, toR, toC) {
     playPachiSound();
 }
 
+// 各駒ごとに個別の成り判定を行う関数
 function checkPromotion(pieceObj, fromR, toR, playerTurn) {
     let enemyZone = (playerTurn === 'sente') ? [0, 1, 2] : [6, 7, 8];
     let isEnemyArea = enemyZone.includes(fromR) || enemyZone.includes(toR);
+    let playerStr = (playerTurn === 'sente') ? '先手' : '後手';
 
     if (isEnemyArea) {
-        if (playerTurn === 'sente' || gameMode === 'pvp') {
-            pieceObj.types.forEach(p => {
-                if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
-                    if (confirm(`${PIECE_DISPLAY_NAMES[p.type].name} を 成りますか？`)) {
+        pieceObj.types.forEach(p => {
+            if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
+                let pieceName = PIECE_DISPLAY_NAMES[p.type].name;
+                if (playerTurn === 'sente' || gameMode === 'pvp') {
+                    if (confirm(`${pieceName} を 成りますか？`)) {
                         p.isPromoted = true;
-                        addGameLog(`${playerTurn === 'sente' ? '先手' : '後手'}: ${PIECE_DISPLAY_NAMES[p.type].name} を成りました`);
+                        addGameLog(`${playerStr}: ${pieceName} を成りました`);
+                    } else {
+                        addGameLog(`${playerStr}: ${pieceName} は成らず`);
                     }
-                }
-            });
-        } else {
-            pieceObj.types.forEach(p => {
-                if (!p.isPromoted && PIECE_DISPLAY_NAMES[p.type].promoted) {
+                } else {
+                    // CPUは原則すべて成る
                     p.isPromoted = true;
-                    addGameLog(`後手(CPU): ${PIECE_DISPLAY_NAMES[p.type].name} を成りました`);
+                    addGameLog(`${playerStr}(CPU): ${pieceName} を成りました`);
                 }
-            });
-        }
+            }
+        });
     }
 }
 
@@ -649,13 +651,12 @@ function runCpuTurn() {
                 score += 15000;
             }
 
-            // 【新機能】タダ捨て防止（相手の利きがあり、味方の守りがない危険なマスへの移動・打ち込みを大減点）
             let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
             let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
             
             if (isUnderSenteAttack && !isProtectedByGote) {
                 let pieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
-                score -= pieceVal * 300; // 価値に応じた強烈なペナルティでタダ捨てを回避
+                score -= pieceVal * 300;
             }
 
             if (newGoteKing) {
@@ -693,7 +694,7 @@ function runCpuTurn() {
                 } else if (targetPiece) {
                     if (targetPiece.owner === 'sente') {
                         let capturedVal = getPieceTotalValue(targetPiece);
-                        score += capturedVal * 150; // 駒を取るメリットを強化
+                        score += capturedVal * 150;
                     } else {
                         score += 10; 
                     }
