@@ -95,7 +95,7 @@ function getMovableCoords(r, c, pieceObj) {
             // 2枚超の合体禁止
             if (target.types.length >= 2) return false;
             
-            // 【修正】自分の歩（未成り・成り問わず歩を含む駒）とは合体不可
+            // 自分の「歩」とは合体できないルール
             let movingHasFu = pieceObj.types.some(t => t.type === 1);
             let targetHasFu = target.types.some(t => t.type === 1);
             if (movingHasFu || targetHasFu) return false;
@@ -351,7 +351,7 @@ function checkPromotion(pieceObj, fromR, toR) {
     let isEnemyArea = enemyZone.includes(fromR) || enemyZone.includes(toR);
 
     if (isEnemyArea) {
-        pieceObj.types.forEach(p => {
+        pieceObj.types.exportEach = pieceObj.types.forEach(p => {
             if (!p.isPromoted && PIECE_TYPES[p.type].promoted) {
                 if (confirm(`${PIECE_TYPES[p.type].name} を 成りますか？`)) {
                     p.isPromoted = true;
