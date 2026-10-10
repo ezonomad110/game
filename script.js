@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.41';
+const SCRIPT_VERSION = 'v3.42';
 
 let audioCtx = null;
 
@@ -45,23 +45,21 @@ const PIECE_DISPLAY_NAMES = {
     8: { name: '王', promoted: null }
 };
 
-// 駒ごとの基本価値
 const PIECE_VALUES = {
     1: 1, 2: 3, 3: 3, 4: 4, 5: 6, 6: 10, 7: 14, 8: 2000
 };
 
-// 駒オブジェクト全体の価値を計算（重なりや成りも考慮）
 function getPieceTotalValue(pieceObj) {
     if (!pieceObj || !pieceObj.types) return 0;
     let baseSum = 0;
     pieceObj.types.forEach(t => {
         let val = PIECE_VALUES[t.type] || 1;
-        if (t.isPromoted) val += 2; // 成り駒は少し価値アップ
+        if (t.isPromoted) val += 2;
         baseSum += val;
     });
-    // 重なっている（スタック）場合、連携ボーナスを加算して重要度を高める
+    // 過剰な合体を抑制するため、スタックボーナスは控えめに調整
     if (pieceObj.types.length > 1) {
-        baseSum *= 1.35;
+        baseSum *= 1.1; 
     }
     return baseSum;
 }
@@ -280,12 +278,17 @@ function addRay(moves, owner, r, c, dr, dc) {
     }
 }
 
-function getDropCoords(pieceType) {
+function getDropCoords(pieceType, owner) {
     let moves = [];
+    let lastRank = (owner === 'sente') ? 0 : 8;
+
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
             if (!board[r][c]) {
-                if (pieceType === 1 && hasNifu(c, turn)) continue;
+                if (pieceType === 1) {
+                    if (hasNifu(c, owner)) continue;
+                    if (r === lastRank) continue; // 行き所の無い歩の制限
+                }
                 moves.push({r, c});
             }
         }
@@ -471,7 +474,7 @@ function handleHandClick(index) {
     } else {
         selectedHandIndex = index;
         let pieceType = hands[turn][index];
-        movableCoords = getDropCoords(pieceType);
+        movableCoords = getDropCoords(pieceType, turn);
     }
     render();
 }
@@ -589,7 +592,7 @@ function runCpuTurn() {
     }
 
     hands['gote'].forEach((pieceType, hIndex) => {
-        let dropCoords = getDropCoords(pieceType);
+        let dropCoords = getDropCoords(pieceType, 'gote');
         dropCoords.forEach(d => {
             allMoves.push({ type: 'drop', handIndex: hIndex, pieceType: pieceType, toR: d.r, toC: d.c });
         });
@@ -638,17 +641,15 @@ function runCpuTurn() {
                 board[move.toR][move.toC] = createPieceObj([move.pieceType], 'gote');
             }
 
-            // 自王の安全確認（王手放置は厳禁）
             let newGoteKing = findKingCoord('gote');
             let willBeInCheck = newGoteKing ? isSquareUnderAttack(newGoteKing.r, newGoteKing.c, 'sente') : false;
 
             if (willBeInCheck) {
                 score -= 50000;
             } else if (isKingInCheck) {
-                score += 15000; // 王手からの逃げ・対応に高得点
+                score += 15000;
             }
 
-            // 【防衛強化】自分の王の近くに敵が迫っているときの危機感と対応ボーナス
             if (newGoteKing) {
                 let sentePiecesThreatening = 0;
                 for (let r = 0; r < 9; r++) {
@@ -662,15 +663,14 @@ function runCpuTurn() {
                         }
                     }
                 }
-                // 敵が自王の近くにいる場合、王を遠ざける手や、王の周囲に駒を寄せる・合体させる手にボーナス
                 if (sentePiecesThreatening > 3) {
                     let moveDistToKing = Math.abs(move.toR - newGoteKing.r) + Math.abs(move.toC - newGoteKing.c);
                     if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
                         if (moveDistToKing > (Math.abs(move.fromR - newGoteKing.r) + Math.abs(move.fromC - newGoteKing.c))) {
-                            score += 8000; // 王を危険から逃がす手
+                            score += 8000;
                         }
                     } else if (moveDistToKing <= 2) {
-                        score += 3000; // 王の近くに守り駒を寄せる・重ねる手
+                        score += 3000;
                     }
                 }
             }
@@ -681,30 +681,24 @@ function runCpuTurn() {
             if (move.type === 'board') {
                 if (targetPiece && targetPiece.owner === 'sente' && targetPiece.types.some(t => t.type === 8)) {
                     isCapturingKing = true;
-                    score += 999999; // 王獲得は最優先
+                    score += 999999;
                 } else if (targetPiece) {
                     if (targetPiece.owner === 'sente') {
-                        // 相手の駒を取る場合、その「価値の高さ」に応じた報酬を与える
                         let capturedVal = getPieceTotalValue(targetPiece);
                         score += capturedVal * 120;
                     } else {
-                        // 自分の駒と合体する場合、強力なスタックを作る手にボーナス
-                        let stackCountAfter = targetPiece.types.length + movingPiece.types.length;
-                        score += stackCountAfter * 150;
+                        score += 10; 
                     }
                 }
 
-                // 【無駄な王手の排除 ＆ 有効な王手の評価】
-                // 動いた後の位置から相手の王に対して王手をかけているかチェック
                 let isCheckingSente = senteKing ? getMovableCoords(move.toR, move.toC, board[move.toR][move.toC]).some(m => m.r === senteKing.r && m.c === senteKing.c) : false;
                 if (isCheckingSente) {
                     let movingVal = getPieceTotalValue(board[move.toR][move.toC]);
-                    // 単体の歩（価値が低い）や、相手の利き（攻撃）の中に単体で飛び込むような無駄な王手はペナルティ
                     let isUnderAttackBySente = isSquareUnderAttack(move.toR, move.toC, 'sente');
                     if (movingVal <= 1 && isUnderAttackBySente) {
-                        score -= 5000; // 無駄な歩の王手はしない！
+                        score -= 5000;
                     } else {
-                        score += 4000; // 価値のある駒や合体駒による有効な王手は積極的に狙う
+                        score += 4000;
                     }
                 }
 
@@ -718,7 +712,6 @@ function runCpuTurn() {
                     score += move.toR;
                 }
             } else if (move.type === 'drop') {
-                // 持ち駒を打つ場合の評価（価値の高い駒を効果的に使う）
                 score += PIECE_VALUES[move.pieceType] * 40;
                 if (move.toR >= 5) score += 50;
             }
