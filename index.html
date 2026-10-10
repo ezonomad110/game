@@ -9,14 +9,19 @@
 <body>
 
     <div class="header-area">
-        <h1>重棋 <span style="font-size: 0.75rem; font-weight: normal; color: #dcb35c;">(ちょうぎ)</span></h1>
-        <span class="version-badge">[v3.2]</span>
+        <h1>重棋 <span class="header-ruby">(ちょうぎ)</span></h1>
+        <span class="version-badge">[v3.3]</span>
     </div>
-    <div id="status">先手の番です</div>
 
-    <div class="hand-container" id="gote-hand">
-        <span class="hand-label">後手持ち駒:</span>
-        <div id="gote-hand-pieces" class="hand-pieces-inner gote-pieces"></div>
+    <!-- 後手エリア（持ち駒トレイ ＋ ターン表示） -->
+    <div class="player-hud gote-hud" id="gote-hud">
+        <div class="hud-info">
+            <span class="player-name">後手</span>
+            <span class="turn-indicator">▼ 手番</span>
+        </div>
+        <div class="hand-container" id="gote-hand">
+            <div id="gote-hand-pieces" class="hand-pieces-inner gote-pieces"></div>
+        </div>
     </div>
 
     <!-- 座標付き将棋盤 -->
@@ -32,9 +37,15 @@
         </div>
     </div>
 
-    <div class="hand-container" id="sente-hand">
-        <span class="hand-label">先手持ち駒:</span>
-        <div id="sente-hand-pieces" class="hand-pieces-inner"></div>
+    <!-- 先手エリア（持ち駒トレイ ＋ ターン表示） -->
+    <div class="player-hud sente-hud" id="sente-hud">
+        <div class="hand-container" id="sente-hand">
+            <div id="sente-hand-pieces" class="hand-pieces-inner"></div>
+        </div>
+        <div class="hud-info">
+            <span class="player-name">先手</span>
+            <span class="turn-indicator">▲ 手番</span>
+        </div>
     </div>
 
     <script src="script.js"></script>
