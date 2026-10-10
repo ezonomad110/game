@@ -351,7 +351,7 @@ function checkPromotion(pieceObj, fromR, toR) {
     let isEnemyArea = enemyZone.includes(fromR) || enemyZone.includes(toR);
 
     if (isEnemyArea) {
-        pieceObj.types.exportEach = pieceObj.types.forEach(p => {
+        pieceObj.types.forEach(p => {
             if (!p.isPromoted && PIECE_TYPES[p.type].promoted) {
                 if (confirm(`${PIECE_TYPES[p.type].name} を 成りますか？`)) {
                     p.isPromoted = true;
