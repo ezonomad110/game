@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.50';
+const SCRIPT_VERSION = 'v3.51';
 
 let audioCtx = null;
 
@@ -52,9 +52,8 @@ function getPieceTotalValue(pieceObj) {
         if (t.isPromoted) val += 2;
         baseSum += val;
     });
-    // 合体している場合はシナジー効果として価値を少し高めに評価
     if (pieceObj.types.length > 1) {
-        baseSum *= 1.25; 
+        baseSum *= 1.3; 
     }
     return baseSum;
 }
@@ -636,10 +635,21 @@ async function runCpuTurn() {
     } else {
         let goteKing = findKingCoord('gote');
         let isKingInCheck = goteKing ? isSquareUnderAttack(goteKing.r, goteKing.c, 'sente') : false;
+
+        // 【新機能】先手が自陣1-3列目(行0〜2)および行3に侵入しているかの警戒フラグ
+        let senteInGoteTerritory = false;
+        for (let r = 0; r <= 3; r++) {
+            for (let c = 0; c < 9; c++) {
+                let p = board[r][c];
+                if (p && p.owner === 'sente') senteInGoteTerritory = true;
+            }
+        }
+
         let scoredMoves = allMoves.map(move => {
             let score = Math.random() * (cpuLevel === 3 ? 0.3 : 1.5);
             let movingPiece = null;
             let targetPiece = null;
+
             if (move.type === 'board') {
                 movingPiece = board[move.fromR][move.fromC];
                 targetPiece = board[move.toR][move.toC];
@@ -660,29 +670,42 @@ async function runCpuTurn() {
 
             let newGoteKing = findKingCoord('gote');
             let willBeInCheck = newGoteKing ? isSquareUnderAttack(newGoteKing.r, newGoteKing.c, 'sente') : false;
-            if (willBeInCheck) score -= 80000;
-            else if (isKingInCheck) score += 20000;
+            if (willBeInCheck) score -= 100000;
+            else if (isKingInCheck) score += 30000;
 
-            // 【強化】王が前線に出る行動へのペナルティをさらに厳しく
+            // 1. 【要件】王が不用意に1-3列目を出て前線に出ない
             if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
-                if (move.toR >= 3) score -= (move.toR - 2) * 3000;
+                if (move.toR >= 3) score -= (move.toR - 2) * 5000;
             }
 
-            // 【強化】合体駒で攻撃・前進する手を高評価
-            if (move.type === 'board' && movingPiece && movingPiece.types.length > 1) {
-                score += movingPiece.types.length * 150;
-                if (move.toR >= 5) score += 300; // 敵陣へ向かう合体駒びいき
+            // 2. 【要件】自陣（行0〜2）への侵入に対して警戒を強める
+            if (senteInGoteTerritory) {
+                // 自陣防衛のために移動する手を高く評価
+                if (move.toR <= 3) {
+                    score += 400;
+                    if (targetPiece && targetPiece.owner === 'sente') {
+                        score += getPieceTotalValue(targetPiece) * 300; // 侵入してきた敵駒の迎撃
+                    }
+                }
             }
 
-            let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
+            // 3. 【要件】複数駒で攻め/守りを構成（味方の利きがあるマス＝連結の手を高評価）
             let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
+            if (isProtectedByGote) {
+                score += 250; // 紐（味方のサポート）がついている強固な配置
+            }
+
+            // 4. 【要件】不要に駒を取らせない（コマ損・タダ捨てを極限排除）
+            let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
             if (isUnderSenteAttack && !isProtectedByGote) {
                 let pieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
-                score -= pieceVal * 600; // タダ捨てを徹底拒否
+                score -= pieceVal * 1000; // サポートのない場所への安易な飛び込みを完全拒否
             } else if (isUnderSenteAttack && targetPiece && targetPiece.owner === 'sente') {
                 let myPieceVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
                 let capturedVal = getPieceTotalValue(targetPiece);
-                if (myPieceVal > capturedVal) score -= (myPieceVal - capturedVal) * 300;
+                if (myPieceVal > capturedVal) {
+                    score -= (myPieceVal - capturedVal) * 500; // 不利な駒交換を排除
+                }
             }
 
             if (move.type === 'board') {
@@ -693,6 +716,7 @@ async function runCpuTurn() {
             }
             return { move, score };
         });
+
         scoredMoves.sort((a, b) => b.score - a.score);
         bestMove = scoredMoves[0].move;
     }
