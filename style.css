@@ -22,7 +22,7 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
 .header-ruby { font-size: 0.75rem; font-weight: normal; color: #dcb35c; }
 .version-badge { font-size: 0.7rem; color: #ffadad; font-weight: bold; font-family: sans-serif; }
 
-/* プレイヤーHUD＆持ち駒トレイの洗練 */
+/* プレイヤーHUD＆持ち駒トレイ */
 .player-hud {
     width: 100%;
     max-width: 440px;
@@ -82,7 +82,7 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
 }
 .hand-piece.selected { background-color: #ffeb3b; border-color: #d32f2f; transform: scale(1.08); }
 
-/* 將棋盤外枠と美しい余白・座標バランス */
+/* 将棋盤外枠 */
 .shogi-board-wrapper {
     display: flex;
     flex-direction: column;
@@ -156,7 +156,7 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     box-shadow: 0 0 4px #27ae60;
 }
 
-/* 駒のデザイン＆複数合体時の2x2グリッド調整 */
+/* 駒のデザイン */
 .piece {
     width: 88%;
     height: 92%;
@@ -164,6 +164,7 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
     border-top: 1px solid #d4af37;
     clip-path: polygon(18% 0%, 82% 0%, 100% 100%, 0% 100%);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.35);
@@ -172,6 +173,7 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
 .piece.sente { color: #111; }
 .piece.gote { color: #111; transform: rotate(180deg); }
 
+/* 合体駒（ゴールド感＋★マーク） */
 .piece.merged {
     background: linear-gradient(to bottom, #fffbeb, #fae19c);
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.85);
@@ -179,23 +181,24 @@ h1 { font-size: 1.15rem; margin: 0; color: #f3e5c8; letter-spacing: 2px; }
 .piece.merged::before {
     content: '★';
     position: absolute;
-    top: 1px;
-    right: calc(50% - 4px);
+    top: 2px;
+    right: 4px;
     font-size: 0.45rem;
     color: #d4af37;
     z-index: 2;
 }
 
-/* 複数合体時のグリッドコンテナ */
+/* 複数合体時の2x2グリッド配置 */
 .piece-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    width: 80%;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
+    width: 85%;
     height: 75%;
     align-items: center;
     justify-items: center;
     padding-top: 4px;
+    box-sizing: border-box;
 }
 
 .sub-piece {
