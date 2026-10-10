@@ -53,7 +53,6 @@ let selectedHandIndex = null;
 let movableCoords = [];
 let isCpuThinking = false;
 
-// バージョン表示の更新
 function updateVersionBadge() {
     const badge = document.getElementById('version-badge');
     if (badge) {
@@ -276,7 +275,9 @@ function render() {
             const piece = board[r][c];
             if (piece) {
                 const pDiv = document.createElement('div');
-                pDiv.className = `piece ${piece.owner} ${piece.types.length > 1 ? 'merged' : ''}`;
+                // ⭐️ owner プロパティを確実にクラスとして付与する（未定義なら 'sente' をフォールバック）
+                const ownerClass = (piece.owner === 'gote') ? 'gote' : 'sente';
+                pDiv.className = `piece ${ownerClass} ${piece.types.length > 1 ? 'merged' : ''}`;
                 
                 const innerDiv = document.createElement('div');
                 innerDiv.className = 'piece-content-inner';
@@ -415,7 +416,7 @@ function executeMove(fromR, fromC, toR, toC) {
             }
             let originalOwner = target.owner;
             target.types.push(...moving.types);
-            target.owner = originalOwner; // 所有者は絶対に書き換えない
+            target.owner = originalOwner;
             board[fromR][fromC] = null;
         } else {
             if (target.types.some(t => t.type === 8)) {
@@ -534,7 +535,6 @@ function runCpuTurn() {
 
                 if (targetPiece) {
                     let simulatedTypes = [...targetPiece.types, ...movingPiece.types];
-                    // ⭐️シミュレーション時もターゲットの owner（gote）を絶対に維持
                     board[move.toR][move.toC] = { types: simulatedTypes, owner: targetPiece.owner };
                 } else {
                     board[move.toR][move.toC] = movingPiece;
@@ -611,6 +611,5 @@ function runCpuTurn() {
     render();
 }
 
-// 初期化
 initBoard();
 render();
