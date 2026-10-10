@@ -16,19 +16,19 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     padding: 0 4px;
     box-sizing: border-box;
 }
 
 h1 {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     margin: 0;
     color: #f3e5c8;
 }
 
 .header-ruby {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #b0a080;
 }
 
@@ -42,9 +42,9 @@ h1 {
     background: #4a3b2c;
     color: #f3e5c8;
     border: 1px solid #dcb35c;
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: 4px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     cursor: pointer;
 }
 
@@ -64,9 +64,9 @@ h1 {
     background: #2d241c;
     border: 2px solid #4a3b2c;
     border-radius: 6px;
-    padding: 6px 10px;
+    padding: 4px 8px;
     box-sizing: border-box;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -75,7 +75,7 @@ h1 {
 .player-hud.active {
     border-color: #dcb35c;
     background: #382c20;
-    box-shadow: 0 0 8px rgba(220, 179, 92, 0.3);
+    box-shadow: 0 0 6px rgba(220, 179, 92, 0.3);
 }
 
 .hud-info {
@@ -84,13 +84,13 @@ h1 {
 }
 
 .player-name {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: bold;
     color: #f3e5c8;
 }
 
 .turn-indicator {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #dcb35c;
     display: none;
 }
@@ -103,15 +103,15 @@ h1 {
 .hand-container {
     display: flex;
     gap: 4px;
-    min-height: 32px;
+    min-height: 28px;
     align-items: center;
     overflow-x: auto;
-    max-width: 320px;
+    max-width: 280px;
 }
 
 .hand-pieces-inner {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     flex-wrap: wrap;
 }
 
@@ -119,16 +119,15 @@ h1 {
     background: #443528;
     border: 1px solid #b89742;
     color: #f3e5c8;
-    width: 30px;
-    height: 34px;
+    width: 26px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: bold;
     clip-path: polygon(25% 0%, 75% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%);
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
 
 .hand-piece:hover {
@@ -138,7 +137,6 @@ h1 {
 .hand-piece.selected {
     background: #dcb35c;
     color: #1e1e1e;
-    transform: translateY(-2px);
 }
 
 /* 将棋盤ラッパー */
@@ -147,17 +145,17 @@ h1 {
     flex-direction: column;
     align-items: center;
     background: #c39b67;
-    padding: 6px;
+    padding: 4px;
     border-radius: 6px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     border: 3px solid #8b5a2b;
 }
 
 .coords-top {
     display: grid;
-    grid-template-columns: repeat(9, 36px);
+    grid-template-columns: repeat(9, 34px);
     text-align: center;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #3e2723;
     font-weight: bold;
     margin-bottom: 2px;
@@ -171,26 +169,26 @@ h1 {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #3e2723;
     font-weight: bold;
-    margin-left: 4px;
-    width: 16px;
+    margin-left: 3px;
+    width: 14px;
     text-align: center;
 }
 
 #board-container {
     display: grid;
-    grid-template-columns: repeat(9, 36px);
-    grid-template-rows: repeat(9, 36px);
+    grid-template-columns: repeat(9, 34px);
+    grid-template-rows: repeat(9, 34px);
     background: #e4b97d;
     border: 2px solid #5c3a21;
 }
 
 /* マス目 */
 .cell {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border: 1px solid #b88650;
     display: flex;
     align-items: center;
@@ -206,66 +204,53 @@ h1 {
 
 .cell.movable::after {
     content: '';
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     background-color: rgba(46, 204, 113, 0.8);
     border-radius: 50%;
     position: absolute;
-    box-shadow: 0 0 4px rgba(46, 204, 113, 1);
 }
 
-/* 駒の基本デザイン（将棋の駒型） */
+/* 駒のデザイン */
 .piece {
-    width: 32px;
-    height: 35px;
+    width: 30px;
+    height: 33px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
     box-sizing: border-box;
     position: relative;
-    box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
     clip-path: polygon(25% 0%, 75% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%);
 }
 
-/* 先手（自分）の駒：明るい木目・黄褐色系（デフォルト） */
-.piece {
+.piece.sente {
     background: linear-gradient(135deg, #f7d794, #e7c16d);
     color: #2b2b2b;
 }
 
-/* 先手の合体駒 */
-.piece.merged {
+.piece.gote {
+    background: linear-gradient(135deg, #d89a72, #b26841);
+    color: #fff9f0;
+}
+
+.piece.sente.merged {
     background: linear-gradient(135deg, #ffeaa7, #fdcb6e) !important;
     color: #2d3436 !important;
     border: 1.5px solid #d4ac0d;
-    box-shadow: 0 0 5px rgba(253, 203, 110, 0.7);
-}
-
-/* ⭐️ 文字の向き（逆さま＝180度回転）が適用されている「後手」の駒は、色も必ず赤茶系にする！ */
-.piece:has(.piece-content-inner) {
-    /* フォールバック用 */
-}
-
-/* .piece.gote または 中身が回転する構造を持つ後手の駒の配色 */
-.piece.gote {
-    background: linear-gradient(135deg, #d89a72, #b26841) !important;
-    color: #fff9f0 !important;
 }
 
 .piece.gote.merged {
     background: linear-gradient(135deg, #e6a882, #9e4f28) !important;
     color: #fff9f0 !important;
     border: 1.5px solid #632b13;
-    box-shadow: 0 0 5px rgba(158, 79, 40, 0.7);
 }
 
-/* 後手の駒の中身（単体でも合体でも）を180度回転させて逆さまにする */
 .piece.gote .piece-content-inner {
     transform: rotate(180deg);
 }
 
-/* コンテンツ領域 */
 .piece-content-inner {
     width: 100%;
     height: 100%;
@@ -274,13 +259,30 @@ h1 {
     justify-content: center;
 }
 
-/* 単体駒のテキスト */
 .single-piece-text {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     line-height: 1;
 }
 
-.piece.sente .sub-piece.promoted {
+.piece-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    width: 100%;
+    height: 100%;
+    padding: 1px;
+    box-sizing: border-box;
+}
+
+.sub-piece {
+    font-size: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.sub-piece.promoted {
     color: #c0392b;
 }
 
@@ -288,26 +290,45 @@ h1 {
     color: #ffcccc;
 }
 
-/* 4分割グリッド（合体時） */
-.piece-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
+/* ログパネル */
+.log-panel {
     width: 100%;
-    height: 100%;
-    padding: 2px 1px 1px 1px;
+    max-width: 500px;
+    background: #2d241c;
+    border: 2px solid #4a3b2c;
+    border-radius: 6px;
+    padding: 6px 10px;
     box-sizing: border-box;
+    margin-top: 6px;
 }
 
-.sub-piece {
-    font-size: 0.5rem;
+.log-header {
+    font-size: 0.75rem;
+    color: #dcb35c;
+    font-weight: bold;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #4a3b2c;
+    padding-bottom: 2px;
+}
+
+.log-container {
+    height: 70px;
+    overflow-y: auto;
+    font-size: 0.7rem;
+    color: #d0c0a0;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
+    flex-direction: column;
+    gap: 2px;
 }
 
-/* モーダル共通 */
+.log-item {
+    background: #382c20;
+    padding: 2px 4px;
+    border-radius: 3px;
+    border-left: 2px solid #dcb35c;
+}
+
+/* モーダル関連 */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -325,11 +346,10 @@ h1 {
     background: #382c20;
     border: 3px solid #dcb35c;
     border-radius: 8px;
-    padding: 20px;
+    padding: 16px;
     width: 90%;
-    max-width: 340px;
+    max-width: 320px;
     box-sizing: border-box;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
     color: #f4f4f9;
     text-align: center;
 }
@@ -337,41 +357,32 @@ h1 {
 .modal-content h2 {
     color: #f3e5c8;
     margin-top: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
     border-bottom: 2px solid #dcb35c;
-    padding-bottom: 8px;
+    padding-bottom: 6px;
 }
 
 .modal-buttons {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 15px;
+    gap: 8px;
+    margin-top: 12px;
 }
 
 .mode-select-btn {
     background: #dcb35c;
     color: #2b2b2b;
     border: none;
-    padding: 10px;
-    font-size: 0.95rem;
+    padding: 8px;
+    font-size: 0.9rem;
     font-weight: bold;
     border-radius: 4px;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.mode-select-btn:hover {
-    background: #f3e5c8;
 }
 
 .cpu-btn {
     background: #8b6b43;
     color: #f3e5c8;
-}
-
-.cpu-btn:hover {
-    background: #a38054;
 }
 
 .rule-open-btn {
@@ -380,31 +391,15 @@ h1 {
     border: 1px solid #dcb35c;
 }
 
-.rule-open-btn:hover {
-    background: #5d4a38;
-}
-
-/* ルールモーダル用 */
 .rule-modal-content {
-    max-width: 420px;
+    max-width: 400px;
     text-align: left;
 }
 
 .rule-body {
-    font-size: 0.85rem;
-    line-height: 1.5;
+    font-size: 0.8rem;
+    line-height: 1.4;
     color: #e0d8c8;
-    max-height: 280px;
+    max-height: 240px;
     overflow-y: auto;
-    padding-right: 4px;
-    margin-bottom: 15px;
-}
-
-.rule-body ul {
-    padding-left: 18px;
-    margin: 6px 0;
-}
-
-.rule-body li {
-    margin-bottom: 4px;
 }
