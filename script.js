@@ -42,22 +42,27 @@ let board = Array(9).fill(null).map(() => Array(9).fill(null));
 let hands = { sente: [], gote: [] };
 
 let turn = 'sente';
-let gameMode = 'cpu'; // 初期値: vs CPU ('cpu' または 'pvp')
+let gameMode = 'cpu'; // 'cpu' または 'pvp'
+let cpuLevel = 2;    // 1: 初級, 2: 中級, 3: 上級
 let selectedCoord = null;
 let selectedHandIndex = null;
 let movableCoords = [];
 let isCpuThinking = false;
 
-function toggleGameMode() {
-    gameMode = (gameMode === 'cpu') ? 'pvp' : 'cpu';
-    const btn = document.getElementById('mode-toggle-btn');
+function openModeModal() {
+    document.getElementById('mode-modal').style.display = 'flex';
+}
+
+function setGameMode(mode, level) {
+    gameMode = mode;
+    cpuLevel = level;
+    document.getElementById('mode-modal').style.display = 'none';
+
     const goteName = document.getElementById('gote-name');
-    
     if (gameMode === 'cpu') {
-        btn.textContent = 'vs CPU';
-        goteName.textContent = '後手 (CPU)';
+        let lvlName = level === 1 ? '初級' : (level === 2 ? '中級' : '上級');
+        goteName.textContent = `後手 (CPU:${lvlName})`;
     } else {
-        btn.textContent = '対人戦';
         goteName.textContent = '後手 (プレイヤー)';
     }
     initBoard();
@@ -390,7 +395,6 @@ function checkPromotion(pieceObj, fromR, toR, playerTurn) {
                 }
             });
         } else {
-            // CPU（後手）の場合は自動で成れるものを成る
             pieceObj.types.forEach(p => {
                 if (!p.isPromoted && PIECE_TYPES[p.type].promoted) {
                     p.isPromoted = true;
@@ -411,12 +415,11 @@ function switchTurn() {
 }
 
 // ==========================
-// 🤖 CPU思考ルーチン
+// 🤖 レベル別 CPU思考ルーチン
 // ==========================
 function runCpuTurn() {
     let allMoves = [];
 
-    // 1. 盤上の駒の移動手を収集
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
             let p = board[r][c];
@@ -429,7 +432,6 @@ function runCpuTurn() {
         }
     }
 
-    // 2. 持ち駒を打つ手を収集
     hands['gote'].forEach((pieceType, hIndex) => {
         let dropCoords = getDropCoords(pieceType);
         dropCoords.forEach(d => {
@@ -443,32 +445,36 @@ function runCpuTurn() {
         return;
     }
 
-    // 3. 評価値による手選び（王手・敵駒捕獲・合体を優先）
-    let scoredMoves = allMoves.map(move => {
-        let score = Math.random() * 2; // ランダム性（同点時の揺らぎ）
-        if (move.type === 'board') {
-            let target = board[move.toR][move.toC];
-            if (target) {
-                if (target.owner === 'sente') {
-                    if (target.types.some(t => t.type === 8)) score += 10000; // 王を捕まえる
-                    else score += target.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0) * 10;
-                } else if (target.owner === 'gote') {
-                    // 合体ボーナス
-                    score += 15;
+    let bestMove;
+
+    if (cpuLevel === 1) {
+        // 初級：完全ランダム
+        bestMove = allMoves[Math.floor(Math.random() * allMoves.length)];
+    } else {
+        // 中級・上級：評価値による最善手選択
+        let scoredMoves = allMoves.map(move => {
+            let score = Math.random() * (cpuLevel === 2 ? 5 : 1); // 上級はランダム要素少なめ
+            if (move.type === 'board') {
+                let target = board[move.toR][move.toC];
+                if (target) {
+                    if (target.owner === 'sente') {
+                        if (target.types.some(t => t.type === 8)) score += 20000;
+                        else score += target.types.reduce((sum, t) => sum + PIECE_VALUES[t.type], 0) * 15;
+                    } else if (target.owner === 'gote') {
+                        score += (cpuLevel === 3 ? 30 : 15); // 上級は合体を積極的に狙う
+                    }
                 }
+                score += move.toR * (cpuLevel === 3 ? 3 : 1); // 敵陣へ進むのを評価
+            } else if (move.type === 'drop') {
+                score += PIECE_VALUES[move.pieceType] * 3;
             }
-            // 敵陣へ近づく手は評価アップ
-            score += move.toR;
-        } else if (move.type === 'drop') {
-            score += PIECE_VALUES[move.pieceType] * 2;
-        }
-        return { move, score };
-    });
+            return { move, score };
+        });
 
-    scoredMoves.sort((a, b) => b.score - a.score);
-    let bestMove = scoredMoves[0].move;
+        scoredMoves.sort((a, b) => b.score - a.score);
+        bestMove = scoredMoves[0].move;
+    }
 
-    // 4. 手の実行
     if (bestMove.type === 'board') {
         executeMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
     } else if (bestMove.type === 'drop') {
@@ -482,6 +488,11 @@ function runCpuTurn() {
     turn = 'sente';
     render();
 }
+
+// 初回起動時はモード選択モーダルを表示しておく
+document.addEventListener("DOMContentLoaded", () => {
+    openModeModal();
+});
 
 initBoard();
 render();
