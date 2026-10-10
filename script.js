@@ -53,6 +53,14 @@ let selectedHandIndex = null;
 let movableCoords = [];
 let isCpuThinking = false;
 
+// バージョン表示の更新
+function updateVersionBadge() {
+    const badge = document.getElementById('version-badge');
+    if (badge) {
+        badge.textContent = '[v3.26]';
+    }
+}
+
 function openModeModal() {
     document.getElementById('mode-modal').style.display = 'flex';
     document.getElementById('rule-modal').style.display = 'none';
@@ -107,6 +115,7 @@ function initBoard() {
 
     turn = 'sente';
     resetSelection();
+    updateVersionBadge();
 }
 
 function createPieceObj(types, owner) {
@@ -299,6 +308,7 @@ function render() {
 
     renderHands();
     updateHUD();
+    updateVersionBadge();
 }
 
 function renderHands() {
@@ -399,17 +409,15 @@ function executeMove(fromR, fromC, toR, toC) {
 
     if (target) {
         if (target.owner === moving.owner) {
-            // 自分同士の駒を重ねた場合（所有者は元のターゲットのものを厳守）
             if (target.types.length + moving.types.length > 4) {
                 alert("駒は最大4つまでしか重ねられません！");
                 return;
             }
+            let originalOwner = target.owner;
             target.types.push(...moving.types);
-            // ⭐️重要：所有者は絶対に元のターゲット（＝その場の持ち主）のままにする！
-            target.owner = target.owner; 
+            target.owner = originalOwner; // 所有者は絶対に書き換えない
             board[fromR][fromC] = null;
         } else {
-            // 異なる所有者の駒がぶつかった場合
             if (target.types.some(t => t.type === 8)) {
                 playPachiSound();
                 render();
@@ -425,7 +433,7 @@ function executeMove(fromR, fromC, toR, toC) {
             if (target.types.length + moving.types.length <= 4) {
                 let originalTargetOwner = target.owner;
                 target.types.push(...moving.types);
-                target.owner = originalTargetOwner; // 相手のエリア/相手の駒なので相手の所有者のまま
+                target.owner = originalTargetOwner;
                 board[fromR][fromC] = null;
             } else {
                 alert("駒は最大4つまでしか重ねられません！");
@@ -525,8 +533,8 @@ function runCpuTurn() {
                 capturedPiece = targetPiece;
 
                 if (targetPiece) {
-                    // ⭐️シミュレーション時も元のターゲットの owner を厳守して結合する
                     let simulatedTypes = [...targetPiece.types, ...movingPiece.types];
+                    // ⭐️シミュレーション時もターゲットの owner（gote）を絶対に維持
                     board[move.toR][move.toC] = { types: simulatedTypes, owner: targetPiece.owner };
                 } else {
                     board[move.toR][move.toC] = movingPiece;
@@ -603,5 +611,6 @@ function runCpuTurn() {
     render();
 }
 
+// 初期化
 initBoard();
 render();
