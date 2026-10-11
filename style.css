@@ -1,8 +1,7 @@
-/* Google Fonts 筆文字のインポート */
 @import url('https://fonts.googleapis.com/css2?family=Yuji+Boku&display=swap');
 
 :root {
-    --css-version: 'v3.55'; /* ここでCSSのバージョンを自己申告 */
+    --css-version: 'v3.55';
     --bg-color: #1a1614;
     --panel-bg: #2d241c;
     --border-color: #dcb35c;
@@ -26,26 +25,39 @@ body {
 
 header {
     margin-top: 15px;
-    text-align: center;
     width: 100%;
     display: flex;
     justify-content: center;
 }
 
-h1 {
-    font-size: 1.8rem;
-    color: var(--border-color);
-    margin: 0 0 5px 0;
-    letter-spacing: 2px;
+.header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 0 10px;
+    box-sizing: border-box;
 }
 
-.version-badge {
-    font-size: 0.75rem;
-    background: var(--panel-bg);
+h1 {
+    font-size: 1.6rem;
     color: var(--border-color);
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid var(--border-color);
+    margin: 0;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.sub-title {
+    font-size: 0.85rem;
+    font-weight: normal;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 8px;
 }
 
 .main-container {
@@ -57,7 +69,6 @@ h1 {
     justify-content: center;
 }
 
-/* 盤面エリア */
 .board-section {
     display: flex;
     flex-direction: column;
@@ -119,7 +130,6 @@ h1 {
     color: var(--bg-color);
 }
 
-/* 9x9ボード */
 #board-container {
     display: grid;
     grid-template-columns: repeat(9, 48px);
@@ -164,7 +174,6 @@ h1 {
     background-color: rgba(231, 76, 60, 0.25);
 }
 
-/* 駒のデザイン・フォント設定 */
 .piece {
     width: 42px;
     height: 42px;
@@ -226,7 +235,6 @@ h1 {
     color: #c0392b !important;
 }
 
-/* サイドパネル・ログ・コントロール */
 .side-panel {
     width: 320px;
     display: flex;
@@ -249,8 +257,9 @@ h1 {
     padding-bottom: 5px;
 }
 
+/* ログ領域の高さを拡張してより広く表示 */
 #game-log-container {
-    height: 220px;
+    height: 340px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -272,10 +281,11 @@ button.action-btn {
     background: #3d3024;
     border: 1px solid var(--border-color);
     color: var(--text-color);
-    padding: 8px 12px;
+    padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 0.85rem;
     transition: background 0.1s, transform 0.1s;
 }
 
@@ -284,7 +294,6 @@ button.action-btn:hover {
     transform: translateY(-1px);
 }
 
-/* モーダル画面 */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -318,7 +327,7 @@ button.action-btn:hover {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 .modal-buttons button {
@@ -336,6 +345,13 @@ button.action-btn:hover {
     background: #5a4531;
 }
 
+.version-badge-modal {
+    margin-top: 15px;
+    font-size: 0.75rem;
+    color: var(--border-color);
+    opacity: 0.8;
+}
+
 @media (max-width: 768px) {
     .main-container {
         flex-direction: column;
@@ -344,6 +360,9 @@ button.action-btn:hover {
     .side-panel {
         width: 100%;
         max-width: 420px;
+    }
+    #game-log-container {
+        height: 220px; /* スマホでは画面に収まるよう調整 */
     }
     #board-container {
         grid-template-columns: repeat(9, 40px);
