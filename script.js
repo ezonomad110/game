@@ -765,6 +765,32 @@ function closeRuleModal() {
     initAudio();
     document.getElementById('rule-modal').style.display = 'none';
 }
+// ルールモーダルの開閉
+function openRuleModal() {
+    initAudio();
+    document.getElementById('rule-modal').style.display = 'flex';
+}
+
+function closeRuleModal() {
+    initAudio();
+    document.getElementById('rule-modal').style.display = 'none';
+}
+
+// 対局ログをクリップボードにコピーする関数
+function copyGameLogs() {
+    initAudio();
+    if (!gameLogs || gameLogs.length === 0) {
+        alert("コピーするログがありません。");
+        return;
+    }
+    // 古い順（上から下）に並べ替えてテキスト化
+    const logText = [...gameLogs].reverse().join('\n');
+    navigator.clipboard.writeText(logText).then(() => {
+        alert("対局ログをクリップボードにコピーしました！");
+    }).catch(err => {
+        alert("コピーに失敗しました。");
+    });
+}
 
 initBoard();
 render();
