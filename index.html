@@ -35,13 +35,16 @@
 
         <div class="side-panel">
             <div class="panel-box">
-                <h3>対局ログ (動き・合体履歴)</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #5a4531; padding-bottom: 5px; margin-bottom: 10px;">
+                    <h3 style="margin: 0; border: none; padding: 0;">対局ログ (動き・合体履歴)</h3>
+                    <button class="action-btn" onclick="copyGameLogs()" style="padding: 3px 8px; font-size: 0.75rem;">コピー</button>
+                </div>
                 <div id="game-log-container"></div>
             </div>
         </div>
     </div>
 
-    <!-- モーダル各種（バージョン情報とルールボタンを統合） -->
+    <!-- モーダル各種 -->
     <div id="mode-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h2>重棋へようこそ</h2>
@@ -52,11 +55,9 @@
                 <button onclick="setGameMode('cpu', 3)">CPU対戦 (上級・強)</button>
                 <button onclick="setGameMode('pvp', 0)">2人対戦 (PvP)</button>
             </div>
-            <!-- ルール確認ボタンを追加 -->
             <div style="margin-top: 15px;">
                 <button class="action-btn" onclick="openRuleModal()" style="width: 100%; padding: 8px;">ルール・遊び方</button>
             </div>
-            <!-- 各ファイルのバージョン情報をモーダル内に集約 -->
             <div class="version-badge-modal">
                 HTML: <span id="html-version">v3.55</span> / 
                 JS: <span id="js-version">v3.55</span> / 
