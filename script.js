@@ -755,6 +755,17 @@ async function runCpuTurn() {
     }
 }
 
+
+function openRuleModal() {
+    initAudio();
+    document.getElementById('rule-modal').style.display = 'flex';
+}
+
+function closeRuleModal() {
+    initAudio();
+    document.getElementById('rule-modal').style.display = 'none';
+}
+
 initBoard();
 render();
 openModeModal();
