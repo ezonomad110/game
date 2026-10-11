@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.53';
+const SCRIPT_VERSION = 'v3.55';
 
 let audioCtx = null;
 
@@ -293,7 +293,6 @@ function addStep(moves, r, c) {
     if (r >= 0 && r < 9 && c >= 0 && c < 9) moves.push({r, c});
 }
 
-// 【修正箇所】ncの代入バグを修正 (c: nc)
 function addRay(moves, owner, r, c, dr, dc) {
     let nr = r + dr, nc = c + dc;
     while (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
@@ -670,13 +669,15 @@ async function runCpuTurn() {
 
             let newGoteKing = findKingCoord('gote');
             let willBeInCheck = newGoteKing ? isSquareUnderAttack(newGoteKing.r, newGoteKing.c, 'sente') : false;
-            if (willBeInCheck) score -= 150000;
-            else if (isKingInCheck) score += 40000;
+            if (willBeInCheck) score -= 200000;
+            else if (isKingInCheck) score += 50000;
 
+            // 1. 王が不用意に前に出ない
             if (move.type === 'board' && movingPiece && movingPiece.types.some(t => t.type === 8)) {
-                if (move.toR >= 3) score -= (move.toR - 2) * 8000;
+                if (move.toR >= 3) score -= (move.toR - 2) * 10000;
             }
 
+            // 2. 自陣への侵入警戒
             if (senteInGoteTerritory && move.toR <= 3) {
                 score += 500;
                 if (targetPiece && targetPiece.owner === 'sente') {
@@ -685,17 +686,41 @@ async function runCpuTurn() {
             }
 
             let isProtectedByGote = isSquareUnderAttack(move.toR, move.toC, 'gote');
-            if (isProtectedByGote) score += 300;
-
             let isUnderSenteAttack = isSquareUnderAttack(move.toR, move.toC, 'sente');
+            let movingVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
+
+            // 3. 【防御面】タダ捨て防止（相手の利きがあるマスへの無謀な突撃を拒否）
             if (isUnderSenteAttack) {
-                let movingVal = (move.type === 'board') ? getPieceTotalValue(movingPiece) : PIECE_VALUES[move.pieceType];
-                if (!isProtectedByGote) {
-                    score -= movingVal * 3000;
+                if (targetPiece && targetPiece.owner === 'sente') {
+                    let capturedVal = getPieceTotalValue(targetPiece);
+                    if (movingVal > capturedVal && !isProtectedByGote) {
+                        score -= movingVal * 5000;
+                    }
                 } else {
-                    score -= movingVal * 1500;
+                    if (!isProtectedByGote) {
+                        score -= movingVal * 10000;
+                    } else {
+                        score -= movingVal * 2000;
+                    }
                 }
             }
+
+            // 4. 【攻撃面逆転適用】安全かつ有利な攻撃・進出の評価アップ
+            if (targetPiece && targetPiece.owner === 'sente') {
+                let capturedVal = getPieceTotalValue(targetPiece);
+                // 相手の駒を取る手で、かつ返り討ちに合わない（＝相手の利きがない、または味方のサポートがある）場合
+                if (!isUnderSenteAttack || isProtectedByGote || capturedVal >= movingVal) {
+                    score += capturedVal * 300; // 有利な捕獲や安全な駒取りを強く推奨
+                }
+            } else if (!targetPiece) {
+                // 空きマスへの前進：相手の利きが及んでいない安全なマス、または敵陣へ向かう進出を高評価
+                if (!isUnderSenteAttack) {
+                    score += move.toR * 15; // 敵陣（行8方向）へ向かって前進するボーナス
+                    if (isProtectedByGote) score += 100; // 味方の紐付きで安全に連携前進
+                }
+            }
+
+            if (isProtectedByGote) score += 400;
 
             if (move.type === 'board') {
                 board[move.fromR][move.fromC] = movingPiece;
@@ -703,6 +728,7 @@ async function runCpuTurn() {
             } else if (move.type === 'drop') {
                 board[move.toR][move.toC] = targetPiece;
             }
+
             return { move, score };
         });
 
