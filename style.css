@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Yuji+Boku&display=swap');
 
 :root {
+    --css-version: 'v3.55'; /* ここでCSSのバージョンを自己申告 */
     --bg-color: #1a1614;
     --panel-bg: #2d241c;
     --border-color: #dcb35c;
@@ -26,6 +27,9 @@ body {
 header {
     margin-top: 15px;
     text-align: center;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 h1 {
@@ -36,10 +40,10 @@ h1 {
 }
 
 .version-badge {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     background: var(--panel-bg);
     color: var(--border-color);
-    padding: 2px 8px;
+    padding: 4px 8px;
     border-radius: 4px;
     border: 1px solid var(--border-color);
 }
@@ -190,7 +194,6 @@ h1 {
     justify-content: center;
 }
 
-/* 単体駒（1文字）のときの表示 */
 .single-piece-text {
     font-size: 26px;
     line-height: 1;
@@ -198,7 +201,6 @@ h1 {
     text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.2);
 }
 
-/* 合体駒（2x2グリッド・最大4文字）のときの表示：潰れ防止の最適化 */
 .piece-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -211,7 +213,7 @@ h1 {
 }
 
 .sub-piece {
-    font-size: 13px; /* 4文字並んでも綺麗に収まるサイズ */
+    font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -220,7 +222,6 @@ h1 {
     font-weight: bold;
 }
 
-/* 成り駒の赤文字 */
 .sub-piece.promoted {
     color: #c0392b !important;
 }
@@ -267,17 +268,11 @@ h1 {
     border-left: 3px solid var(--border-color);
 }
 
-.control-buttons {
-    display: flex;
-    gap: 8px;
-}
-
 button.action-btn {
-    flex: 1;
     background: #3d3024;
     border: 1px solid var(--border-color);
     color: var(--text-color);
-    padding: 8px;
+    padding: 8px 12px;
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
@@ -341,7 +336,6 @@ button.action-btn:hover {
     background: #5a4531;
 }
 
-/* レスポンシブ対応 */
 @media (max-width: 768px) {
     .main-container {
         flex-direction: column;
