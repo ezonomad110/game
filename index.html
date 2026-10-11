@@ -1,115 +1,77 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-html-version="v3.55">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>重棋 (ちょうぎ)</title>
-    <!-- style.css v3.49 -->
-    <link rel="stylesheet" href="style.css?v=3.49">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="header-area">
-        <div>
-            <h1>重棋 <span class="header-ruby">(ちょうぎ)</span></h1>
-        </div>
-        <div class="header-right">
-            <button class="header-btn" onclick="undoMove()">待った</button>
-            <button class="header-btn" onclick="openModeModal()">モード設定</button>
-            <div id="version-badge" class="version-badge">
-                HTML: v3.49<br>
-                JS: <span id="js-version">読み込み中...</span><br>
-                CSS: v3.49
+    <header>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 500px; padding: 0 10px; box-sizing: border-box;">
+            <h1 style="margin: 0;">重棋 <span style="font-size: 0.9rem; font-weight: normal;">(ちょうぎ)</span></h1>
+            <div style="display: flex; gap: 8px;">
+                <button class="action-btn" onclick="undoMove()" style="padding: 6px 12px; font-size: 0.85rem;">待った</button>
+                <button class="action-btn" onclick="openModeModal()" style="padding: 6px 12px; font-size: 0.85rem;">モード設定</button>
+            </div>
+            <!-- 各ファイルのバージョンを自己申告して表示するバッジ -->
+            <div class="version-badge" style="font-size: 0.75rem; text-align: right; line-height: 1.3; padding: 4px 8px;">
+                HTML: <span id="html-version">v3.55</span><br>
+                JS: <span id="js-version">v3.55</span><br>
+                CSS: <span id="css-version">v3.55</span>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- プレイヤーHUD：後手 (CPU) -->
-    <div id="gote-hud" class="player-hud">
-        <div class="hud-info">
-            <span id="gote-name" class="player-name">後手 (CPU:中級)</span>
-            <span class="turn-indicator">▼ 手番</span>
-        </div>
-        <div class="hand-container">
-            <div id="gote-hand-pieces" class="hand-pieces-inner"></div>
-        </div>
-    </div>
+    <!-- 以下、メインコンテンツやボードのコンテナ -->
+    <div class="main-container">
+        <div class="board-section">
+            <div id="gote-hud" class="player-hud">
+                <span id="gote-name" class="player-name">後手 (CPU)</span>
+                <div id="gote-hand-pieces" class="hand-pieces-container"></div>
+            </div>
 
-    <!-- 将棋盤 -->
-    <div class="shogi-board-wrapper">
-        <div class="coords-top">
-            <span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
-        </div>
-        <div class="board-with-side">
             <div id="board-container"></div>
-            <div class="coords-right">
-                <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>七</span><span>八</span><span>九</span>
+
+            <div id="sente-hud" class="player-hud">
+                <span class="player-name">先手 (あなた)</span>
+                <div id="sente-hand-pieces" class="hand-pieces-container"></div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div class="panel-box">
+                <h3>対局ログ (動き・合体履歴)</h3>
+                <div id="game-log-container"></div>
             </div>
         </div>
     </div>
 
-    <!-- プレイヤーHUD：先手 (あなた) -->
-    <div id="sente-hud" class="player-hud active" style="margin-top: 4px;">
-        <div class="hud-info">
-            <span class="player-name">先手 (あなた)</span>
-            <span class="turn-indicator">▲ 手番</span>
-        </div>
-        <div class="hand-container">
-            <div id="sente-hand-pieces" class="hand-pieces-inner"></div>
-        </div>
-    </div>
-
-    <!-- 駒の動き・合体ログエリア -->
-    <div class="log-panel">
-        <div class="log-header">対局ログ (動き・合体履歴)</div>
-        <div id="game-log-container" class="log-container"></div>
-    </div>
-
-    <!-- 成り確認カスタムモーダル -->
-    <div id="promote-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h2 id="promote-modal-title">成りますか？</h2>
-            <div class="modal-buttons" style="flex-direction: row; justify-content: space-around; margin-top: 16px;">
-                <button class="mode-select-btn" style="flex: 1;" onclick="resolvePromote(true)">はい</button>
-                <button class="mode-select-btn cpu-btn" style="flex: 1;" onclick="resolvePromote(false)">いいえ</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- モード選択モーダル -->
+    <!-- モーダル各種 -->
     <div id="mode-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h2>重棋へようこそ</h2>
-            <p style="font-size: 0.85rem; color: #d0c0a0; margin: 8px 0;">駒を重ねて合体できる変則ボードゲーム</p>
+            <p>対局モードを選んでください</p>
             <div class="modal-buttons">
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 1)">対CPU戦 (初級)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 2)">対CPU戦 (中級)</button>
-                <button class="mode-select-btn cpu-btn" onclick="setGameMode('cpu', 3)">対CPU戦 (上級・強)</button>
-                <button class="mode-select-btn" onclick="setGameMode('pvp', 0)">二人対戦 (PvP)</button>
-                <button class="mode-select-btn rule-open-btn" onclick="openRuleModalFromModal()">遊び方・ルール</button>
+                <button onclick="setGameMode('cpu', 1)">CPU対戦 (初級)</button>
+                <button onclick="setGameMode('cpu', 2)">CPU対戦 (中級)</button>
+                <button onclick="setGameMode('cpu', 3)">CPU対戦 (上級・強)</button>
+                <button onclick="setGameMode('pvp', 0)">2人対戦 (PvP)</button>
             </div>
         </div>
     </div>
 
-    <!-- ルール説明モーダル -->
-    <div id="rule-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content rule-modal-content">
-            <h2>遊び方・ルール</h2>
-            <div class="rule-body">
-                <p><strong>【基本ルール】</strong></p>
-                <ul>
-                    <li>同じマスに最大4つまで自分の駒を重ねて合体させることができます。</li>
-                    <li>王将（玉将）を捕らえると勝利です。</li>
-                    <li>敵陣に入って成った駒は、元の駒名のまま**赤字**で表示されます（個別選択可能）。</li>
-                </ul>
-            </div>
-            <div class="modal-buttons">
-                <button class="mode-select-btn" onclick="closeRuleModal()">戻る</button>
+    <div id="promote-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="promote-modal-title">成りますか？</h2>
+            <div class="modal-buttons" style="flex-direction: row; justify-content: center; gap: 15px;">
+                <button onclick="resolvePromote(true)" style="flex: 1;">成る</button>
+                <button onclick="resolvePromote(false)" style="flex: 1; background: #555;">成らず</button>
             </div>
         </div>
     </div>
 
-    <!-- script.js v3.49 -->
-    <script src="script.js?v=3.49"></script>
+    <script src="script.js"></script>
 </body>
 </html>
