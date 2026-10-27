@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.60';
+const SCRIPT_VERSION = 'v3.61';
 
 let audioCtx = null;
 
@@ -374,7 +374,7 @@ function render() {
                 innerDiv.className = 'piece-content-inner';
                 if (piece.types.length > 1) {
                     const gridDiv = document.createElement('div');
-                    gridDiv.className = 'piece-grid';
+                    gridDiv.className = `piece-grid grid-${piece.types.length}`;
                     piece.types.forEach(p => {
                         const sub = document.createElement('span');
                         sub.className = `sub-piece ${p.isPromoted ? 'promoted' : ''}`;
@@ -394,7 +394,7 @@ function render() {
                 if (piece.types.length > 1) {
                     const badge = document.createElement('span');
                     badge.className = `stack-badge stack-${piece.types.length}`;
-                    badge.textContent = `×${piece.types.length}`;
+                    badge.textContent = `${piece.types.length}`;
                     cell.appendChild(badge);
                 }
             }

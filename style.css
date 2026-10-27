@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Yuji+Boku&display=swap');
 
-/* 重棋 v3.60 テーマ「漆黒 × 金 ＋ 合体発光」 */
+/* 重棋 v3.61 テーマ「漆黒 × 金 ＋ 合体発光」 */
 :root {
-    --css-version: 'v3.60';
+    --css-version: 'v3.61';
     --bg-color: #0a0908;
     --panel-bg: #17130e;
     --panel-bg-2: #1f1912;
@@ -278,18 +278,18 @@ h1 {
 /* 合体段数バッジ（3案の「+n」バッジの分かりやすさを取り入れ） */
 .stack-badge {
     position: absolute;
-    top: -5px;
-    right: -5px;
+    top: -3px;
+    right: -3px;
     z-index: 4;
-    min-width: 19px;
-    height: 19px;
-    padding: 0 4px;
+    width: 15px;
+    height: 15px;
+    padding: 0;
     box-sizing: border-box;
-    border-radius: 10px;
+    border-radius: 50%;
     background: linear-gradient(180deg, var(--gold-bright), var(--border-color));
     color: #171208;
     border: 1px solid #6e5620;
-    font-size: 11px;
+    font-size: 9px;
     font-weight: bold;
     font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
     display: flex;
@@ -331,12 +331,22 @@ h1 {
     width: 100%;
     height: 100%;
     gap: 0px;
-    padding: 16% 6% 4% 6%;
+    padding: 15% 3% 2% 3%;
     box-sizing: border-box;
 }
 
+/* 2段は縦2列で大きく、3段は上1＋下2、4段は2×2 */
+.piece-grid.grid-2 {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(2, 1fr);
+}
+.piece-grid.grid-3 > .sub-piece:first-child {
+    grid-column: 1 / -1;
+}
+
 .sub-piece {
-    font-size: clamp(9px, 2.7vw, 13px);
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    font-size: clamp(12px, 3.6vw, 16px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -344,6 +354,12 @@ h1 {
     color: var(--gold-bright);
     font-weight: bold;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
+}
+.piece-grid.grid-2 .sub-piece {
+    font-size: clamp(15px, 4.6vw, 21px);
+}
+.piece-grid.grid-3 .sub-piece {
+    font-size: clamp(13px, 4vw, 18px);
 }
 
 .sub-piece.promoted {
