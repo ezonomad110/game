@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.61';
+const SCRIPT_VERSION = 'v3.62';
 
 let audioCtx = null;
 
@@ -391,12 +391,6 @@ function render() {
                 }
                 pDiv.appendChild(innerDiv);
                 cell.appendChild(pDiv);
-                if (piece.types.length > 1) {
-                    const badge = document.createElement('span');
-                    badge.className = `stack-badge stack-${piece.types.length}`;
-                    badge.textContent = `${piece.types.length}`;
-                    cell.appendChild(badge);
-                }
             }
             cell.addEventListener('click', () => {
                 if (isGameOver) return;

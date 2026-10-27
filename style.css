@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Yuji+Boku&display=swap');
 
-/* 重棋 v3.61 テーマ「漆黒 × 金 ＋ 合体発光」 */
+/* 重棋 v3.62 テーマ「漆黒 × 金 ＋ 合体発光」 */
 :root {
-    --css-version: 'v3.61';
+    --css-version: 'v3.62';
     --bg-color: #0a0908;
     --panel-bg: #17130e;
     --panel-bg-2: #1f1912;
@@ -275,38 +275,6 @@ h1 {
         drop-shadow(0 3px 4px rgba(0,0,0,0.7));
 }
 
-/* 合体段数バッジ（3案の「+n」バッジの分かりやすさを取り入れ） */
-.stack-badge {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    z-index: 4;
-    width: 15px;
-    height: 15px;
-    padding: 0;
-    box-sizing: border-box;
-    border-radius: 50%;
-    background: linear-gradient(180deg, var(--gold-bright), var(--border-color));
-    color: #171208;
-    border: 1px solid #6e5620;
-    font-size: 9px;
-    font-weight: bold;
-    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.6);
-    pointer-events: none;
-}
-.stack-badge.stack-3 {
-    background: linear-gradient(180deg, #ffc46b, #ff963c);
-    color: #2a1400;
-}
-.stack-badge.stack-4 {
-    background: linear-gradient(180deg, #ff8a70, var(--accent-red));
-    color: #fff;
-    box-shadow: 0 0 9px rgba(255, 90, 60, 0.8);
-}
 
 .piece-content-inner {
     width: 100%;
