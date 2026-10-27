@@ -1,4 +1,4 @@
-const SCRIPT_VERSION = 'v3.55';
+const SCRIPT_VERSION = 'v3.60';
 
 let audioCtx = null;
 
@@ -76,8 +76,10 @@ let historyStack = [];
 let promoteResolver = null;
 
 function updateVersionBadge() {
-    const jsVerSpan = document.getElementById('js-version');
-    if (jsVerSpan) jsVerSpan.textContent = SCRIPT_VERSION;
+    ['js-version', 'html-version', 'css-version'].forEach(id => {
+        const span = document.getElementById(id);
+        if (span) span.textContent = SCRIPT_VERSION;
+    });
 }
 
 function addGameLog(message) {
@@ -351,7 +353,13 @@ function render() {
             const cell = document.createElement('div');
             cell.className = 'cell';
             if (selectedCoord && selectedCoord.r === r && selectedCoord.c === c) cell.classList.add('selected');
-            if (movableCoords.some(m => m.r === r && m.c === c)) cell.classList.add('movable');
+            if (movableCoords.some(m => m.r === r && m.c === c)) {
+                cell.classList.add('movable');
+                const targetPiece = board[r][c];
+                if (targetPiece) {
+                    cell.classList.add(targetPiece.owner === turn ? 'movable-merge' : 'movable-capture');
+                }
+            }
             if (lastMove) {
                 if ((lastMove.from && lastMove.from.r === r && lastMove.from.c === c) ||
                     (lastMove.to && lastMove.to.r === r && lastMove.to.c === c)) {
@@ -361,7 +369,7 @@ function render() {
             const piece = board[r][c];
             if (piece) {
                 const pDiv = document.createElement('div');
-                pDiv.className = `piece ${piece.owner} ${piece.types.length > 1 ? 'merged' : ''}`;
+                pDiv.className = `piece ${piece.owner} ${piece.types.length > 1 ? 'merged' : ''} stack-${piece.types.length}`;
                 const innerDiv = document.createElement('div');
                 innerDiv.className = 'piece-content-inner';
                 if (piece.types.length > 1) {
@@ -383,6 +391,12 @@ function render() {
                 }
                 pDiv.appendChild(innerDiv);
                 cell.appendChild(pDiv);
+                if (piece.types.length > 1) {
+                    const badge = document.createElement('span');
+                    badge.className = `stack-badge stack-${piece.types.length}`;
+                    badge.textContent = `×${piece.types.length}`;
+                    cell.appendChild(badge);
+                }
             }
             cell.addEventListener('click', () => {
                 if (isGameOver) return;
